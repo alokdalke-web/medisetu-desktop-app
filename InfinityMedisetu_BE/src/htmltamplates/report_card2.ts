@@ -1,0 +1,424 @@
+export const reportCardTemplate2 = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{patient.name}}'s Prescription</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family={{templateConfig.primaryFont}}&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    @page { size: A4; margin: 0; }
+    :root {
+        --color1: {{templateConfig.colors.color1}};
+        --color2: {{templateConfig.colors.color2}};
+        --color3: {{templateConfig.colors.color3}};
+        --color4: {{templateConfig.colors.color4}};
+        --color5: {{templateConfig.colors.color5}};
+        --color6: {{templateConfig.colors.color6}};
+        --color7: {{templateConfig.colors.color7}};
+        --color8: {{templateConfig.colors.color8}};
+        --color9: {{templateConfig.colors.color9}};
+        --color10: {{templateConfig.colors.color10}};
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: '{{templateConfig.fontFamily}}', Georgia, 'Times New Roman', serif;
+        margin: 0; padding: 0;
+        color: var(--color3);
+        line-height: 1.45;
+        background-color: var(--color5);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .pad {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        background: var(--color8);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border-top: 8px solid var(--color1);
+    }
+
+    /* ---------- Letterhead ---------- */
+    .letterhead {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 24px 40px 16px;
+        border-bottom: 2px solid var(--color1);
+    }
+    .doctor-block { max-width: 60%; }
+    .doctor-name {
+        font-family: 'Playfair Display', serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--color1);
+        line-height: 1.1;
+    }
+    .doctor-qual {
+        font-size: 12px;
+        color: var(--color4);
+        margin-top: 4px;
+    }
+    .doctor-speciality {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color3);
+        margin-top: 2px;
+    }
+    .doctor-reg {
+        font-size: 11px;
+        color: var(--color4);
+        margin-top: 4px;
+    }
+    .clinic-block {
+        text-align: right;
+        max-width: 40%;
+    }
+    .clinic-logo {
+        height: 48px;
+        width: auto;
+        object-fit: contain;
+        margin-bottom: 6px;
+    }
+    .clinic-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--color3);
+    }
+    .clinic-tagline {
+        font-size: 11px;
+        font-style: italic;
+        color: var(--color4);
+        margin-top: 2px;
+    }
+    .clinic-meta {
+        font-size: 11px;
+        color: var(--color4);
+        margin-top: 6px;
+        line-height: 1.5;
+    }
+
+    /* ---------- Timings strip ---------- */
+    .timings {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 18px;
+        padding: 8px 40px;
+        font-size: 10px;
+        color: var(--color4);
+        background: var(--color7);
+        border-top: 1px solid var(--color5);
+    }
+    .timings .lbl {
+        font-weight: 600;
+        color: var(--color1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-right: 6px;
+    }
+    .timing-item span:first-child { font-weight: 600; color: var(--color3); }
+
+    /* ---------- Patient line ---------- */
+    .patient-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 30px;
+        padding: 16px 40px 12px;
+    }
+    .field {
+        font-size: 13px;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+    .field .k {
+        font-weight: 600;
+        color: var(--color1);
+        white-space: nowrap;
+    }
+    .field .v {
+        color: var(--color3);
+        border-bottom: 1px dotted var(--color4);
+        min-width: 90px;
+        padding-bottom: 1px;
+    }
+    .field.grow .v { flex: 1; min-width: 160px; }
+
+    /* ---------- Clinical line (Dx / complaints) ---------- */
+    .clinical {
+        padding: 0 40px 8px;
+        font-size: 13px;
+    }
+    .clinical p { margin: 4px 0; }
+    .clinical .k {
+        font-weight: 600;
+        color: var(--color1);
+        margin-right: 6px;
+    }
+
+    /* ---------- Body / Rx ---------- */
+    .rx-body {
+        flex: 1;
+        padding: 8px 40px 20px;
+        position: relative;
+    }
+    .rx-symbol {
+        font-family: 'Playfair Display', serif;
+        font-size: 46px;
+        font-weight: 700;
+        color: var(--color1);
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+
+    .med-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .med-table th {
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--color1);
+        padding: 6px 8px;
+        border-bottom: 1.5px solid var(--color1);
+    }
+    .med-table td {
+        padding: 12px 8px;
+        border-bottom: 1px dashed var(--color5);
+        font-size: 13px;
+        vertical-align: top;
+    }
+    .med-index {
+        width: 26px;
+        font-weight: 700;
+        color: var(--color4);
+    }
+    .medicine-name {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--color3);
+    }
+    .medicine-strength {
+        font-size: 11px;
+        color: var(--color4);
+        margin-top: 2px;
+    }
+    .medicine-notes {
+        font-size: 11px;
+        color: var(--color4);
+        font-style: italic;
+        margin-top: 3px;
+    }
+
+    /* ---------- Multi-page handling (10+ medicines) ---------- */
+    .med-table thead { display: table-header-group; }
+    .med-table tr { break-inside: avoid; page-break-inside: avoid; }
+
+    /* ---------- Advice / investigations ---------- */
+    .advice-section {
+        padding: 16px 40px 0;
+        font-size: 12px;
+    }
+    .advice-block { margin-bottom: 12px; }
+    .advice-title {
+        font-weight: 700;
+        color: var(--color1);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    .advice-text { color: var(--color3); line-height: 1.6; }
+
+    .follow-up {
+        font-size: 13px;
+        margin-top: 4px;
+    }
+    .follow-up .k { font-weight: 600; color: var(--color1); margin-right: 6px; }
+
+    /* ---------- Signature & footer ---------- */
+    .sign-area {
+        margin-top: auto;
+        padding: 30px 40px 12px;
+        display: flex;
+        justify-content: flex-end;
+    }
+    .sign-box {
+        text-align: center;
+        min-width: 200px;
+    }
+    .sign-line {
+        border-top: 1px solid var(--color3);
+        padding-top: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--color3);
+    }
+    .sign-sub {
+        font-size: 11px;
+        color: var(--color4);
+        margin-top: 2px;
+    }
+    .footer {
+        border-top: 2px solid var(--color1);
+        padding: 8px 40px;
+        font-size: 10px;
+        color: var(--color4);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+    .footer-brand img { height: 16px; width: auto; object-fit: contain; }
+</style>
+</head>
+<body>
+<div class="pad">
+
+    <!-- Letterhead -->
+    <div class="letterhead">
+        <div class="doctor-block">
+            <div class="doctor-name">Dr. {{doctor.name}}</div>
+            {{#if doctor.qualification}}<div class="doctor-qual">{{doctor.qualification}}</div>{{/if}}
+            {{#if doctor.speciality}}<div class="doctor-speciality">{{doctor.speciality}}</div>{{/if}}
+            {{#if doctor.registrationNumber}}<div class="doctor-reg">Reg. No: {{doctor.registrationNumber}}</div>{{/if}}
+        </div>
+        <div class="clinic-block">
+            {{#if clinic.logo}}<img src="{{clinic.logo}}" class="clinic-logo" alt="clinic logo" />{{/if}}
+            <div class="clinic-name">{{clinic.name}}</div>
+            {{#if clinic.tagline}}<div class="clinic-tagline">{{clinic.tagline}}</div>{{/if}}
+            <div class="clinic-meta">
+                {{clinic.address}}{{#if clinic.city}}, {{clinic.city}}{{/if}}{{#if clinic.state}}, {{clinic.state}}{{/if}}{{#if clinic.zipcode}} - {{clinic.zipcode}}{{/if}}
+                {{#if clinic.phone}}<br/>Ph: {{clinic.phone}}{{/if}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient details -->
+    <div class="patient-row">
+        <div class="field"><span class="k">Patient:</span><span class="v">{{patient.name}}</span></div>
+        <div class="field"><span class="k">Age/Sex:</span><span class="v">{{patient.age}} Y / {{patient.gender}}</span></div>
+        <div class="field"><span class="k">Date:</span><span class="v">{{appointmentDate}}</span></div>
+        {{#if patient.address}}
+        <div class="field grow"><span class="k">Address:</span><span class="v">{{patient.address}}</span></div>
+        {{/if}}
+    </div>
+
+    <!-- Complaints & Diagnosis -->
+    {{#if symptoms.length}}
+    <div class="clinical">
+        <p><span class="k">C/O:</span>{{#each symptoms}}{{this.name}}{{#unless @last}}, {{/unless}}{{/each}}</p>
+    </div>
+    {{/if}}
+    {{#if diagnosis}}
+    <div class="clinical">
+        <p><span class="k">Diagnosis:</span>{{diagnosis}}</p>
+    </div>
+    {{/if}}
+
+    <!-- Rx / Medications -->
+    <div class="rx-body">
+        <div class="rx-symbol">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="height: 46px; width: auto; fill: var(--color1); display: block; margin-bottom: 10px;">
+                <path d="M301.26 352l78.06-78.06c6.25-6.25 6.25-16.38 0-22.63l-22.63-22.63c-6.25-6.25-16.38-6.25-22.63 0L256 306.74l-83.96-83.96C219.31 216.8 256 176.89 256 128c0-53.02-42.98-96-96-96H16C7.16 32 0 39.16 0 48v256c0 8.84 7.16 16 16 16h32c8.84 0 16-7.16 16-16v-80h18.75l128 128-78.06 78.06c-6.25 6.25-6.25 16.38 0 22.63l22.63 22.63c6.25 6.25 16.38 6.25 22.63 0L256 374.74l83.96 83.96c6.25 6.25 16.38 6.25 22.63 0l22.63-22.63c6.25-6.25 6.25-16.38 0-22.63L301.26 352zM160 96c17.67 0 32 14.33 32 32s-14.33 32-32 32h-64V96h64z"/>
+            </svg>
+        </div>
+
+        {{#if prescriptions.length}}
+        <table class="med-table">
+            <thead>
+                <tr>
+                    <th class="med-index">#</th>
+                    <th>Medication</th>
+                    <th>Dosage</th>
+                    <th>Duration</th>
+                    <th>Timing/Notes</th>
+                    <th>Instruction</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each prescriptions}}
+                <tr>
+                    <td class="med-index">{{addOne @index}}.</td>
+                    <td><div class="medicine-name">{{this.medicineName}}</div></td>
+                    <td>{{this.frequency}}</td>
+                    <td>{{this.duration}}</td>
+                    <td>{{#if this.notes}}{{this.notes}}{{/if}}</td>
+                    <td>{{this.dosage}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        {{/if}}
+    </div>
+
+    <!-- Advice / Investigations / Follow-up -->
+    {{#if hasTests}}
+    <div class="advice-section">
+        <div class="advice-block">
+            <div class="advice-title">Investigations Advised</div>
+            <div class="advice-text">{{testNames}}</div>
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if advice}}
+    <div class="advice-section">
+        <div class="advice-block">
+            <div class="advice-title">Advice</div>
+            <div class="advice-text">{{advice}}</div>
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if followUpDate}}
+    <div class="advice-section">
+        <div class="follow-up"><span class="k">Next Visit:</span>{{followUpDate}}</div>
+    </div>
+    {{/if}}
+
+    <!-- Signature -->
+    <div class="sign-area">
+        <div class="sign-box">
+            <div class="sign-line">Dr. {{doctor.name}}</div>
+            <div class="sign-sub">Signature</div>
+        </div>
+    </div>
+
+    <!-- Consultation timings (bottom) -->
+    {{#if doctor.groupedAvailability}}
+    <div class="timings">
+        <span class="lbl">Consultation Hours</span>
+        {{#each doctor.groupedAvailability}}
+            {{#if this.isAvailable}}
+            <span class="timing-item"><span>{{this.days}}:</span> {{{this.display}}}</span>
+            {{/if}}
+        {{/each}}
+    </div>
+    {{/if}}
+
+    <!-- Footer -->
+    <div class="footer">
+        <span>{{clinic.name}}</span>
+        <span>This is a computer-generated prescription &mdash; valid without signature.</span>
+        <span class="footer-brand">
+            Powered by
+            <img src="https://infninity-medisatu.s3.ap-south-1.amazonaws.com/ims/Logo%20V1.png" alt="Infinity MediSetu" />
+        </span>
+    </div>
+</div>
+</body>
+</html>
+`;

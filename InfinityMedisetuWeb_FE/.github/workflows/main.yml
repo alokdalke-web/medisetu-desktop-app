@@ -1,0 +1,128 @@
+name: Medisetu Frontend CI/CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Debug - list downloaded artifact
+        run: |
+          echo "Listing dist directory on runner:"
+          ls -R
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      # Upload build to temporary directory
+      - name: Upload to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/tmp/medisetu-release"
+
+      # Activate release (ZERO DOWNTIME DEPLOY)
+      - name: Activate Release
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            BASE=/var/www/medisetu-frontend
+
+            echo "Using BASE: $BASE"
+            if [ -d "$BASE" ]; then
+              echo "Existing contents of BASE:"
+              ls -al "$BASE"
+            else
+              echo "BASE directory does not exist yet, creating it"
+              sudo mkdir -p "$BASE"
+            fi
+
+            echo "Checking uploaded files in /tmp/medisetu-release"
+            if [ -d "/tmp/medisetu-release" ]; then
+              ls -al "/tmp/medisetu-release"
+              if [ -z "$(ls -A /tmp/medisetu-release)" ]; then
+                echo "No files found in /tmp/medisetu-release, aborting without touching BASE"
+                exit 1
+              fi
+            else
+              echo "Directory /tmp/medisetu-release does not exist, aborting without touching BASE"
+              exit 1
+            fi
+
+            echo "Clearing existing contents in BASE"
+            sudo rm -rf "$BASE"/*
+
+            echo "Copying files to BASE"
+            sudo cp -r /tmp/medisetu-release/* "$BASE"/
+
+            echo "Listing BASE after deploy"
+            ls -al "$BASE"
+
+            echo "Deployment completed successfully!"
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Send deployment email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "[MediSetu Frontend] Deploy ${{ needs.deploy.result }} for ${{ github.ref_name }}"
+          to: harshitsharma@igtechso.com,anujbhadoriya@igtechso.com,uditchouhan@igtechso.com
+          from: ${{ secrets.SMTP_FROM }}
+          secure: false
+          html_body: |
+            <h2>MediSetu Frontend Deployment Report</h2>
+            <p><b>Status:</b> ${{ needs.deploy.result }}</p>
+            <p><b>Ref:</b> ${{ github.ref_name }}</p>
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Commit:</b> ${{ github.sha }}</p>
+            <p><b>GitHub Actions run:</b>
+              <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">View logs</a>
+            </p>

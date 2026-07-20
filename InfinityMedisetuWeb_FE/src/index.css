@@ -1,0 +1,332 @@
+@import "tailwindcss";
+@plugin "./heroUI.ts";
+
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-outfit: "Outfit", sans-serif;
+
+  --color-primary: #0a6c74;
+  --color-primary-hover: #46beae;
+  --color-primary-active: #266960;
+  --color-secondary: #2fae8e;
+  --color-secondarybtn: #e8f6f4;
+  --color-background: #f9fbfc;
+  --color-background-secondary: #f2fffd;
+  --color-info: #3371eb;
+  --color-info-secondary: #8a38f5;
+  --color-success: #128635;
+  --color-warning: #ffbd11;
+  --color-danger: #dc3e57;
+  --color-muted: #cbcbcb;
+  --color-border-color: #cfcfcf;
+  /* Figma status chip colors */
+  --color-status-completed: #27b77a;
+  --color-status-cancelled: #e5484d;
+  --color-status-pending: #f4a261;
+  --color-status-confirmed: #2898ff;
+
+  --color-status-completed-bg: #27b77a1a;
+  --color-status-cancelled-bg: #e5484d1a;
+  --color-status-pending-bg: #f4a2611a;
+  --color-status-confirmed-bg: #2898ff1a;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: gray;
+  border-radius: 10px;
+}
+
+body {
+  font-family: var(--font-outfit);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(226, 232, 240, 0.85);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: shimmer 1.15s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ===== Global Layout Utilities ===== */
+
+/* Sidebar-specific thin scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* ===== Mobile Responsive Utilities ===== */
+
+/* Horizontal scroll container for stat cards on mobile, grid on desktop */
+.stats-scroll {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.stats-scroll::-webkit-scrollbar {
+  display: none;
+}
+.stats-scroll > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+@media (min-width: 640px) {
+  .stats-scroll {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+    padding-bottom: 0;
+    scroll-snap-type: none;
+  }
+  .stats-scroll > * {
+    min-width: 0;
+  }
+}
+@media (min-width: 1280px) {
+  .stats-scroll {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Show scrollbar on medium screens and larger */
+@media (min-width: 640px) {
+  .sm\:scrollbar-auto::-webkit-scrollbar {
+    display: block;
+  }
+
+  .sm\:scrollbar-auto {
+    -ms-overflow-style: auto;  /* IE and Edge */
+    scrollbar-width: auto;  /* Firefox */
+  }
+}
+
+/* ===== Dark mode overrides ===== */
+.dark {
+  color-scheme: dark;
+  color: #f8fafc;
+
+  /* Keep white as real white so text-white and dark:text-white remain readable. */
+  --color-white: #ffffff;
+  --color-black: #f8fafc;
+
+  --color-gray-50: #0b1321;
+  --color-gray-100: #151c2d;
+  --color-gray-200: #273244;
+  --color-gray-300: #38445a;
+  --color-gray-400: #64748b;
+  --color-gray-500: #94a3b8;
+  --color-gray-600: #cbd5e1;
+  --color-gray-700: #e2e8f0;
+  --color-gray-800: #f1f5f9;
+  --color-gray-900: #f8fafc;
+  --color-gray-950: #ffffff;
+
+  --color-slate-50: #111726;
+  --color-slate-100: #151c2d;
+  --color-slate-200: #273244;
+  --color-slate-300: #38445a;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+  --color-slate-950: #ffffff;
+
+  /* Custom theme overrides */
+  --color-background: #0b1321;
+  --color-background-secondary: #111726;
+  --color-border-color: #273244;
+  --color-muted: #38445a;
+  --color-secondarybtn: #1a3a35;
+}
+
+/* Default SVG icon color in dark mode. Explicit accent/status icon colors still win. */
+:where(.dark svg) {
+  color: #ffffff;
+}
+
+.dark svg[class*="text-gray-"],
+.dark svg[class*="text-slate-"],
+.dark svg[class*="text-zinc-"],
+.dark svg[class*="text-neutral-"],
+.dark svg[class*="text-stone-"],
+.dark svg[class*="text-[#677294]"] {
+  color: #ffffff;
+}
+
+/* Hardcoded hex values in className that Tailwind can't resolve via variables */
+.dark .bg-white { background-color: #111726; }
+.dark .bg-\[\#f8fafc\],
+.dark .bg-\[\#F8FAFC\],
+.dark .bg-\[\#f9fbfc\],
+.dark .bg-\[\#F9FBFC\] { background-color: #0b1321; }
+.dark .bg-\[\#f2fffd\],
+.dark .bg-\[\#F2FFFD\] { background-color: #111726; }
+.dark .text-\[\#1e293b\] { color: #f1f5f9; }
+.dark .text-\[\#100E1C\],
+.dark .text-\[\#100e1c\] { color: #f8fafc; }
+.dark .text-\[\#64748b\] { color: #94a3b8; }
+.dark .text-\[\#6b7280\] { color: #94a3b8; }
+.dark .text-white { color: #ffffff; }
+.dark .border-\[\#e2e8f0\],
+.dark .border-\[\#E2E8F0\],
+.dark .border-\[\#eef2ff\],
+.dark .border-\[\#EEF2FF\],
+.dark .border-\[\#ececec\],
+.dark .border-\[\#ECECEC\],
+.dark .border-\[\#cfcfcf\],
+.dark .border-\[\#CFCFCF\],
+.dark .border-\[\#d7ece7\],
+.dark .border-\[\#D7ECE7\] { border-color: #273244; }
+
+/* Tinted backgrounds (keep hue, darken) */
+.dark .bg-emerald-50 { background-color: #064e3b; }
+.dark .bg-indigo-50 { background-color: #312e81; }
+.dark .bg-green-50 { background-color: #052e16; }
+.dark .bg-orange-50 { background-color: #431407; }
+.dark .bg-blue-50 { background-color: #172554; }
+.dark .bg-red-50,
+.dark .bg-red-50\/50 { background-color: #450a0a; }
+.dark .bg-amber-50 { background-color: #451a03; }
+.dark .bg-purple-50 { background-color: #3b0764; }
+
+/* Status badge backgrounds */
+.dark .bg-green-100 { background-color: #065f46; }
+.dark .bg-blue-100 { background-color: #1e3a5f; }
+.dark .bg-red-100 { background-color: #7f1d1d; }
+.dark .bg-amber-100 { background-color: #78350f; }
+.dark .bg-purple-100 { background-color: #581c87; }
+.dark .bg-orange-100 { background-color: #7c2d12; }
+
+/* Status badge text (inverted for readability) */
+.dark .text-green-800 { color: #6ee7b7; }
+.dark .text-blue-800 { color: #93c5fd; }
+.dark .text-red-800 { color: #fca5a5; }
+.dark .text-amber-800 { color: #fcd34d; }
+.dark .text-purple-800 { color: #c4b5fd; }
+.dark .text-orange-600 { color: #fb923c; }
+.dark .text-emerald-600 { color: #34d399; }
+
+/* Shadows (soften in dark) */
+.dark .shadow-\[0_1px_1px_rgba\(0\,0\,0\,0\.05\)\],
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Skeleton shimmer for dark mode */
+.dark .skeleton,
+.dark .animate-pulse {
+  background: rgba(51, 65, 85, 0.85) !important;
+}
+.dark .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(100, 116, 139, 0.4), transparent) !important;
+}
+
+/* Profile edit: force readable HeroUI form slots and hard-coded light text. */
+.dark .clinic-edit-dark-fix,
+.dark .clinic-edit-dark-fix label,
+.dark .clinic-edit-dark-fix input,
+.dark .clinic-edit-dark-fix textarea,
+.dark .clinic-edit-dark-fix [data-slot="label"],
+.dark .clinic-edit-dark-fix [data-slot="input"] {
+  color: #f8fafc !important;
+}
+
+.dark .clinic-edit-dark-fix input::placeholder,
+.dark .clinic-edit-dark-fix textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
+}
+
+.dark .clinic-edit-dark-fix [data-slot="input-wrapper"] {
+  background-color: #0f1728 !important;
+  border-color: #38445a !important;
+}
+
+.dark .clinic-edit-dark-fix [data-slot="input-wrapper"]:hover,
+.dark .clinic-edit-dark-fix [data-focus="true"] [data-slot="input-wrapper"],
+.dark .clinic-edit-dark-fix [data-focus-within="true"] [data-slot="input-wrapper"] {
+  border-color: #46beae !important;
+}
+
+/* ✅ hide scrollbar but keep scrolling */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.__floater__arrow span svg polygon {
+  fill: #0a1f1c !important;
+}
+
+/* global.css or your modal-specific CSS */
+.custom-no-radius .h-Textarea-wrapper {
+  border-radius: 0 !important; /* removes the radius */
+}
