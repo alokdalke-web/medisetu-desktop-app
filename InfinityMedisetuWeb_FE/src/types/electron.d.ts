@@ -30,6 +30,13 @@ export interface IpcAPI {
   auth: {
     setCredentials: (credentials: { token: string; userId: string; clinicId?: string }) => Promise<any>;
   };
+
+  dashboard: {
+    getDoctorDashboard: (args: any) => Promise<any>;
+    getRevenueOverview: (args: any) => Promise<any>;
+    getTodayOverview: (args: any) => Promise<any>;
+    getPaymentTransactions: (args: any) => Promise<any>;
+  };
 }
 
 declare global {

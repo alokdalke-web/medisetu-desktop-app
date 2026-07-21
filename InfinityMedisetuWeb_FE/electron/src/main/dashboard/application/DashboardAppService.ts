@@ -22,4 +22,8 @@ export class DashboardAppService {
   public getTodayOverview(args: any) {
     return this.repository.getTodayOverview(args);
   }
+
+  public getPaymentTransactions(args: any) {
+    return this.repository.getPaymentTransactions(args);
+  }
 }

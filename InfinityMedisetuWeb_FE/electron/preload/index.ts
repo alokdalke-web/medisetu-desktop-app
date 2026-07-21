@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('ipcAPI', {
     getDoctorDashboard: (args: any) => ipcRenderer.invoke('dashboard:getDoctorDashboard', args),
     getRevenueOverview: (args: any) => ipcRenderer.invoke('dashboard:getRevenueOverview', args),
     getTodayOverview: (args: any) => ipcRenderer.invoke('dashboard:getTodayOverview', args),
+    getPaymentTransactions: (args: any) => ipcRenderer.invoke('dashboard:getPaymentTransactions', args),
   },
 
   prescription: {

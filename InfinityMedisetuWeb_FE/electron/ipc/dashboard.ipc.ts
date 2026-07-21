@@ -34,4 +34,14 @@ export function registerDashboardIpcHandlers() {
       throw error;
     }
   });
+
+  ipcMain.handle('dashboard:getPaymentTransactions', async (_event, args) => {
+    try {
+      logger.info(`[IPC] Handling dashboard:getPaymentTransactions`);
+      return dashboardAppService.getPaymentTransactions(args);
+    } catch (error) {
+      logger.error('[IPC] Error in dashboard:getPaymentTransactions:', error);
+      throw error;
+    }
+  });
 }
