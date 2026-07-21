@@ -3,6 +3,7 @@ import DiscoveryService from './DiscoveryService.js';
 import logger from '../../../utils/logger.js';
 import { EventLogRepository, type EventLogEntry } from '../infrastructure/repositories/EventLogRepository.js';
 import NodeIdentity from './NodeIdentity.js';
+import { EventProjector } from './EventProjector.js';
 import axios from 'axios';
 
 class SyncClient {
@@ -83,8 +84,8 @@ class SyncClient {
              this.eventLogRepo.upsertEvent(db, event);
              mergedCount++;
              
-             // TODO: Project this event onto the local SQLite read-models (patients, appointments tables)
-             // utilizing LWW (Last-Write-Wins) based on the event's lamport_clock.
+             // Project this event onto the local SQLite read-models (patients, appointments tables)
+             EventProjector.project(db, event);
           }
         }
       });
