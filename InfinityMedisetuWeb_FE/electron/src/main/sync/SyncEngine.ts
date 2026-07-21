@@ -97,6 +97,18 @@ export class PushSyncEngine {
           const payload: SyncEventPayload = JSON.parse(event.payload);
 
           // Map local UUIDs to cloud_ids for foreign keys before sending
+          if (payload.entityType === 'patient' && payload.payload && payload.payload.primaryPatientId) {
+            try {
+              const patientRow = db.prepare(`SELECT cloud_id FROM patients WHERE id = ?`).get(payload.payload.primaryPatientId) as any;
+              if (patientRow && patientRow.cloud_id) {
+                payload.payload.primaryPatientId = patientRow.cloud_id;
+                logger.info(`SyncEngine: Rewrote primaryPatientId to cloud_id ${patientRow.cloud_id}`);
+              }
+            } catch (e) {
+              logger.error('SyncEngine: Failed to map patient primaryPatientId', e);
+            }
+          }
+
           if (payload.entityType === 'appointment' && payload.payload && payload.payload.patientId) {
             try {
               const patientRow = db.prepare(`SELECT cloud_id FROM patients WHERE id = ?`).get(payload.payload.patientId) as any;
