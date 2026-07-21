@@ -403,6 +403,14 @@ export function runMigrations(db: Database.Database) {
       up: `
         ALTER TABLE report_cards ADD COLUMN vitals TEXT;
       `
+    },
+    {
+      version: 17,
+      up: `
+        ALTER TABLE event_log ADD COLUMN node_id TEXT;
+        ALTER TABLE event_log ADD COLUMN lamport_clock INTEGER DEFAULT 0;
+        ALTER TABLE event_log ADD COLUMN synced_to_cloud BOOLEAN DEFAULT 0;
+      `
     }
   ];
 

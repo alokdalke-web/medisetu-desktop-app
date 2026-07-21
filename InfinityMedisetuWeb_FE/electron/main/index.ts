@@ -15,6 +15,10 @@ import { registerUsersIpcHandlers } from '../ipc/users.ipc.js';
 import { registerReportHandlers } from '../ipc/report.ipc.js';
 import { registerMedicineIpcHandlers } from '../ipc/medicine.ipc.js';
 import { PushSyncEngine } from '../src/main/sync/SyncEngine.js';
+import NodeIdentity from '../src/main/cluster/NodeIdentity.js';
+import DiscoveryService from '../src/main/cluster/DiscoveryService.js';
+import SyncServer from '../src/main/cluster/SyncServer.js';
+import SyncClient from '../src/main/cluster/SyncClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +70,16 @@ if (!gotTheLock) {
       DatabaseManager.initialize();
       logger.info('Database initialized successfully.');
 
+      // Initialize Node Identity
+      NodeIdentity.initialize();
+
+      // Start P2P UDP Discovery Service
+      DiscoveryService.start();
+
+      // Start P2P HTTP Replication Services
+      SyncServer.start();
+      SyncClient.start();
+
       // Setup IPC
       setupIPC();
       registerPatientIpcHandlers();
@@ -101,6 +115,9 @@ if (!gotTheLock) {
 }
 
 app.on('before-quit', () => {
+  SyncClient.stop();
+  SyncServer.stop();
+  DiscoveryService.stop();
   DatabaseManager.close();
   logger.info('Application gracefully shutting down.');
 });

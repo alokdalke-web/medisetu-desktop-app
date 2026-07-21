@@ -8,6 +8,7 @@ import { NetworkStatusBanner } from "./components/shared/NetworkStatusBanner";
 import SyncDebugPanel from "./components/shared/SyncDebugPanel";
 import { connectSocket } from "./services/socket";
 import { useSocketNotifications } from "./hooks/useSocketNotifications";
+import { useLocalSocketNotifications } from "./hooks/useLocalSocketNotifications";
 import type { RootState } from "./redux/store";
 import { SiteTour } from "./components/shared/TourGuide";
 import { checkTourCompleted, markTourCompleted } from "./utils/cookies";
@@ -195,6 +196,7 @@ function App() {
   }, [token, userId]);
 
   useSocketNotifications(isAuth);
+  useLocalSocketNotifications();
 
   // Initialize Google Analytics only if user has consented to analytics cookies
   const [gaInitialized, setGaInitialized] = useState(false);
