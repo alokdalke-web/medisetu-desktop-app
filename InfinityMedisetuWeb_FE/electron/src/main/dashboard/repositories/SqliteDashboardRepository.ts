@@ -4,55 +4,78 @@ export class SqliteDashboardRepository {
   public getDoctorDashboard(args: any) {
     const db = dbManager.getConnection();
     const doctorId = args?.doctorId || '';
+    const startDate = args?.startDate ? args.startDate.split('T')[0] : '';
+    const endDate = args?.endDate ? args.endDate.split('T')[0] : '';
 
-    // Calculate total patients for this doctor
+    const conditions: string[] = ["1=1"];
+    const params: any[] = [];
+
+    if (doctorId) {
+      conditions.push("doctor_id = ?");
+      params.push(doctorId);
+    }
+
+    if (startDate) {
+      conditions.push("date >= ?");
+      params.push(startDate);
+    }
+    
+    if (endDate) {
+      conditions.push("date <= ?");
+      params.push(endDate);
+    }
+
+    const whereClause = conditions.join(" AND ");
+
+    // Calculate total patients for this doctor/clinic within range
     const totalPatientsRow = db.prepare(`
       SELECT COUNT(DISTINCT patient_id) as count 
       FROM appointments 
-      WHERE doctor_id = ?
-    `).get(doctorId) as any;
+      WHERE ${whereClause}
+    `).get(...params) as any;
 
     // Calculate appointment stats
     const totalAppointmentsRow = db.prepare(`
       SELECT COUNT(*) as count 
       FROM appointments 
-      WHERE doctor_id = ?
-    `).get(doctorId) as any;
+      WHERE ${whereClause}
+    `).get(...params) as any;
 
     const confirmedRow = db.prepare(`
       SELECT COUNT(*) as count 
       FROM appointments 
-      WHERE doctor_id = ? AND status = 'Confirmed'
-    `).get(doctorId) as any;
+      WHERE ${whereClause} AND status = 'Confirmed'
+    `).get(...params) as any;
 
     const completedRow = db.prepare(`
       SELECT COUNT(*) as count 
       FROM appointments 
-      WHERE doctor_id = ? AND status = 'Completed'
-    `).get(doctorId) as any;
+      WHERE ${whereClause} AND status = 'Completed'
+    `).get(...params) as any;
 
     const noShowRow = db.prepare(`
       SELECT COUNT(*) as count 
       FROM appointments 
-      WHERE doctor_id = ? AND status = 'No Show'
-    `).get(doctorId) as any;
+      WHERE ${whereClause} AND status = 'No Show'
+    `).get(...params) as any;
 
     const pendingAppointments = db.prepare(`
       SELECT a.*, p.name as patientName 
       FROM appointments a
       JOIN patients p ON a.patient_id = p.id
-      WHERE a.doctor_id = ? AND a.status = 'Pending'
+      WHERE ${whereClause.replace(/doctor_id/g, 'a.doctor_id').replace(/date/g, 'a.date')} AND a.status = 'Pending'
       ORDER BY a.date ASC, a.time_slot ASC
       LIMIT 10
-    `).all(doctorId) as any[];
+    `).all(...params) as any[];
 
     // Calculate earnings (mocked for now until we have detailed billing)
     const earningsRow = db.prepare(`
-      SELECT SUM(s.price) as total 
+      SELECT SUM(IFNULL(ap.price, s.price)) as total 
       FROM appointments a
-      JOIN services s ON a.service_id = s.id
-      WHERE a.doctor_id = ? AND a.status = 'Completed'
-    `).get(doctorId) as any;
+      LEFT JOIN services s ON a.service_id = s.id
+      LEFT JOIN appointment_payments ap ON a.id = ap.appointment_id
+      WHERE ${whereClause.replace(/doctor_id/g, 'a.doctor_id').replace(/date/g, 'a.date')} AND a.status = 'Completed'
+    `).get(...params) as any;
 
     return {
       status: {
