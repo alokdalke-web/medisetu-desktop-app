@@ -84,7 +84,11 @@ export class SqliteDashboardRepository {
         totalConfirmedAppointments: { count: confirmedRow.count, hikePersent: '0%' },
         totalPendigAppointments: { count: totalAppointmentsRow.count - confirmedRow.count - completedRow.count - noShowRow.count, hikePersent: '0%' },
         totalNoShowAppointments: { count: noShowRow.count, hikePersent: '0%' },
-        totalApoinmentPatient: [{ count: totalPatientsRow.count }]
+        totalApoinmentPatient: [{ count: totalPatientsRow.count }],
+        // Admin Dash specific fields
+        activePatent: { count: totalPatientsRow.count, hikePersent: '0%' },
+        noShowCount: { count: noShowRow.count, hikePersent: '0%' },
+        pendingPayment: { amount: 0, hikePersent: '0%' }
       },
       pendingAppointment: pendingAppointments.map(a => ({
         id: a.patient_id,

@@ -431,20 +431,18 @@ export const dashboardApi = createApi({
   endpoints: (builder) => ({
     /* -------- Existing (Admin) -------- */
     getDashboard: builder.query<DashboardResponse, DashboardQueryArgs>({
-      query: (args) => {
-        if (!args) return "/dashboard";
-
-        const params = cleanParams({
-          months: args.months,
-          startDate: args.startDate,
-          endDate: args.endDate,
-          dateRangeStartCount: args.dateRangeStartCount,
-          dateRangeEndCount: args.dateRangeEndCount,
-        });
-
-        return Object.keys(params).length
-          ? { url: "/dashboard", params }
-          : "/dashboard";
+      queryFn: async (args) => {
+        try {
+          if (!window.ipcAPI?.dashboard) {
+            throw new Error("Local database IPC API not available");
+          }
+          const result = await window.ipcAPI.dashboard.getDoctorDashboard(args || {});
+          // Since SqliteDashboardRepository getDoctorDashboard returns a format that is 
+          // a union of what both AdminDash and DoctorDash expect, we can cast it directly.
+          return { data: { success: true, result } as unknown as DashboardResponse };
+        } catch (error: any) {
+          return { error: { status: "CUSTOM_ERROR", error: error.message || "Failed to fetch dashboard" } };
+        }
       },
       providesTags: ["Dashboard"],
     }),
