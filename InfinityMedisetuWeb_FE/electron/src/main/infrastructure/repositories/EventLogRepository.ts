@@ -50,14 +50,14 @@ export class EventLogRepository {
     );
   }
 
-  public getPendingEvents(db: Database.Database, limit: number = 1): EventLogEntry[] {
+  public getPendingEvents(db: Database.Database, nodeId: string, limit: number = 1): EventLogEntry[] {
     const stmt = db.prepare(`
       SELECT * FROM event_log 
-      WHERE synced_to_cloud = 0 AND retry_count < 5
+      WHERE synced_to_cloud = 0 AND retry_count < 5 AND node_id = ?
       ORDER BY created_at ASC, rowid ASC
       LIMIT ?
     `);
-    return stmt.all(limit) as EventLogEntry[];
+    return stmt.all(nodeId, limit) as EventLogEntry[];
   }
 
   public getEventsAfterClock(db: Database.Database, lamportClock: number): EventLogEntry[] {
