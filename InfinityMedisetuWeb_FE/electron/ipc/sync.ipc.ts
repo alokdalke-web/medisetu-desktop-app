@@ -32,9 +32,14 @@ export function registerSyncIpcHandlers() {
     return { success: true };
   });
 
-  // Optional: Auto-trigger on startup
+  // Auto-trigger on startup and then run periodically every 2 minutes
   setTimeout(() => {
     logger.info('[IPC] Auto-triggering Startup Master Data Sync');
     masterDataSync.triggerSync();
   }, 3000);
+
+  setInterval(() => {
+    logger.info('[IPC] Auto-triggering Periodic Master Data Sync');
+    masterDataSync.triggerSync();
+  }, 120000); // 2 minutes
 }
