@@ -50,14 +50,14 @@ export class EventLogRepository {
     );
   }
 
-  public getPendingEvents(db: Database.Database, nodeId: string, limit: number = 1): EventLogEntry[] {
+  public getPendingEvents(db: Database.Database, limit: number = 1): EventLogEntry[] {
     const stmt = db.prepare(`
       SELECT * FROM event_log 
-      WHERE status IN ('pending', 'failed') AND retry_count < 5 AND node_id = ?
+      WHERE synced_to_cloud = 0 AND retry_count < 5
       ORDER BY created_at ASC, rowid ASC
       LIMIT ?
     `);
-    return stmt.all(nodeId, limit) as EventLogEntry[];
+    return stmt.all(limit) as EventLogEntry[];
   }
 
   public getEventsAfterClock(db: Database.Database, lamportClock: number): EventLogEntry[] {
@@ -107,7 +107,7 @@ export class EventLogRepository {
   public markEventSynced(db: Database.Database, eventId: string): void {
     const stmt = db.prepare(`
       UPDATE event_log 
-      SET status = 'synced', error_message = NULL 
+      SET status = 'synced', synced_to_cloud = 1, error_message = NULL 
       WHERE id = ?
     `);
     stmt.run(eventId);

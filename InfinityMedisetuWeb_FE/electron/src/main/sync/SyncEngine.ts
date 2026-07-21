@@ -2,8 +2,6 @@ import axios from 'axios';
 import DatabaseManager from '../../../database/DatabaseManager';
 import { EventLogRepository, type SyncEventPayload } from '../infrastructure/repositories/EventLogRepository';
 import logger from '../../../utils/logger';
-import NodeIdentity from '../cluster/NodeIdentity';
-
 export class PushSyncEngine {
   private static instance: PushSyncEngine;
   private isOnline = false;
@@ -85,9 +83,8 @@ export class PushSyncEngine {
 
     try {
       while (this.isOnline) {
-        // 1. Get the oldest pending event for THIS specific node only
-        const localNodeId = NodeIdentity.getNodeId();
-        const events = this.eventLogRepository.getPendingEvents(db, localNodeId, 1);
+        // 1. Get the oldest pending event (any node) that hasn't synced to cloud
+        const events = this.eventLogRepository.getPendingEvents(db, 1);
         if (events.length === 0) {
           break; // Queue is empty!
         }
