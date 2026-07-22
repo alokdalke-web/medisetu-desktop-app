@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('ipcAPI', {
     getAvailableSlots: (args: any) => ipcRenderer.invoke('appointment:getAvailableSlots', args),
     update: (args: any) => ipcRenderer.invoke('appointment:update', args),
     getQueueState: (args: any) => ipcRenderer.invoke('appointment:getQueueState', args),
+    markAsNoShow: (args: any) => ipcRenderer.invoke('appointment:markAsNoShow', args),
+    getClinicNoShowAnalytics: (args: any) => ipcRenderer.invoke('appointment:getClinicNoShowAnalytics', args),
     addMultipleServices: (args: any) => ipcRenderer.invoke('appointment:addMultipleServices', args),
     getReports: (appointmentId: string) => ipcRenderer.invoke('appointment:getReports', appointmentId),
   },

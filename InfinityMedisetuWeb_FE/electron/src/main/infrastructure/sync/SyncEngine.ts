@@ -7,6 +7,7 @@ import { DoctorAvailabilitySyncService } from './services/DoctorAvailabilitySync
 import { ServiceSyncService } from './services/ServiceSyncService';
 import { MedicineSyncService } from './services/MedicineSyncService';
 import { TemplateSyncService } from './services/TemplateSyncService';
+import { ClinicSymptomSyncService } from './services/ClinicSymptomSyncService';
 
 export type SyncState = 'Idle' | 'Syncing' | 'Completed' | 'Failed';
 
@@ -18,6 +19,7 @@ export class SyncEngine {
     new ServiceSyncService(),
     new MedicineSyncService(),
     new TemplateSyncService(),
+    new ClinicSymptomSyncService(),
   ];
 
   public getState(): SyncState {

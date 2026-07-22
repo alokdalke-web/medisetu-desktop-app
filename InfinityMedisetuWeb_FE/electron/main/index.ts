@@ -14,6 +14,7 @@ import { registerDashboardIpcHandlers } from '../ipc/dashboard.ipc.js';
 import { registerUsersIpcHandlers } from '../ipc/users.ipc.js';
 import { registerReportHandlers } from '../ipc/report.ipc.js';
 import { registerMedicineIpcHandlers } from '../ipc/medicine.ipc.js';
+import { registerClinicHandlers } from '../ipc/clinic.ipc.js';
 import { PushSyncEngine } from '../src/main/sync/SyncEngine.js';
 import NodeIdentity from '../src/main/cluster/NodeIdentity.js';
 import DiscoveryService from '../src/main/cluster/DiscoveryService.js';
@@ -91,6 +92,7 @@ if (!gotTheLock) {
       registerUsersIpcHandlers();
       registerReportHandlers();
       registerMedicineIpcHandlers();
+      registerClinicHandlers();
 
       // Start Background Sync Worker
       PushSyncEngine.getInstance().start();

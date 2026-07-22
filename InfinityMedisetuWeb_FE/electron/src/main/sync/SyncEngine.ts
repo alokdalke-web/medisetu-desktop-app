@@ -161,8 +161,24 @@ export class PushSyncEngine {
               logger.error('SyncEngine: Failed to map cloud_ids in report_cards', e);
             }
           }
+            // Map endpoint UUIDs (e.g. for no-show)
+            if (payload.entityType === 'appointment_no_show_actions' && payload.endpoint) {
+              try {
+                const match = payload.endpoint.match(/\/appointments\/([a-f0-9\-]+)\/no-show/);
+                if (match && match[1]) {
+                  const localId = match[1];
+                  const apptRow = db.prepare(SELECT cloud_id FROM appointments WHERE id = ?).get(localId) as any;
+                  if (apptRow && apptRow.cloud_id) {
+                    payload.endpoint = payload.endpoint.replace(localId, apptRow.cloud_id);
+                    logger.info(SyncEngine: Rewrote endpoint to \);
+                  }
+                }
+              } catch (e) {
+                logger.error('SyncEngine: Failed to map endpoint cloud_id for no-show', e);
+              }
+            }
 
-          // 2. Execute HTTP Request
+            // 2. Execute HTTP Request
           const response = await axios({
             method: payload.httpMethod,
             url: `${this.API_BASE_URL}${payload.endpoint}`,
@@ -196,16 +212,22 @@ export class PushSyncEngine {
 
           // 4. Mark event synced
           this.eventLogRepository.markEventSynced(db, event.id);
-        } catch (error: any) {
-          logger.error(`SyncEngine: Failed to sync event ${event.id}`, error);
-          
-          // Detect 409 Conflict (could add more specific handling later)
-          let errorMsg = error.message;
-          if (error.response) {
-            errorMsg = `HTTP ${error.response.status}: ${JSON.stringify(error.response.data)}`;
-          }
+          } catch (error: any) {
+            logger.error(SyncEngine: Failed to sync event \, error);
+            
+            // Detect 409 Conflict (could add more specific handling later)
+            let errorMsg = error.message;
+            if (error.response) {
+              errorMsg = HTTP \: \;
+              
+              if (error.response.status === 404) {
+                logger.warn(SyncEngine: Entity not found on cloud (404). Skipping event \ to unblock queue.);
+                this.eventLogRepository.markEventSynced(db, event.id);
+                continue;
+              }
+            }
 
-          // 5. Mark event failed and increment retry_count
+            // 5. Mark event failed and increment retry_count
           this.eventLogRepository.markEventFailed(db, event.id, errorMsg);
 
           // Stop loop for now if we hit an error to preserve sequential ordering.
@@ -233,3 +255,4 @@ export class PushSyncEngine {
     };
   }
 }
+

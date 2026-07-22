@@ -378,7 +378,8 @@ const NewAppointment: React.FC = () => {
     showSymptomLimitToast,
     moveFirstSymptomToChip,
     commitSymptomInputToChip,
-  } = useAppointmentSymptoms({
+      handleCreateSymptom,
+    } = useAppointmentSymptoms({
     restoredDraft,
     toastInfo,
   });
@@ -1573,6 +1574,7 @@ const NewAppointment: React.FC = () => {
               removeSymptom={removeSymptom}
               showLimitToast={showSymptomLimitToast}
               commitInputToChip={commitSymptomInputToChip}
+                handleCreateSymptom={handleCreateSymptom}
               moveFirstSymptomToChip={moveFirstSymptomToChip}
             />
           </div>
@@ -1683,3 +1685,4 @@ const NewAppointment: React.FC = () => {
 };
 
 export default NewAppointment;
+

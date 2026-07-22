@@ -23,9 +23,10 @@ type SymptomsSectionProps = {
   selectSuggestion: (symptomId: string, item: ClinicSymptomItem) => void;
   updateSymptomName: (id: string, value: string) => void;
   removeSymptom: (id: string) => void;
-  showLimitToast: () => void;
+    showLimitToast: () => void;
   commitInputToChip: () => void;
   moveFirstSymptomToChip: () => void;
+  handleCreateSymptom?: (symptomId: string, name: string) => void;
 };
 
 const SymptomsSection: React.FC<SymptomsSectionProps> = ({
@@ -47,9 +48,10 @@ const SymptomsSection: React.FC<SymptomsSectionProps> = ({
   selectSuggestion,
   updateSymptomName,
   removeSymptom,
-  showLimitToast,
+    showLimitToast,
   commitInputToChip,
   moveFirstSymptomToChip,
+  handleCreateSymptom,
 }) => {
   const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSelectingRef = React.useRef(false);
@@ -71,7 +73,7 @@ const SymptomsSection: React.FC<SymptomsSectionProps> = ({
 
   const list = suggestionsById[row.id] ?? [];
   const loading = !!loadingById[row.id];
-  const isDropdownOpen = !limitReached && openSymptomId === row.id && (loading || list.length > 0);
+  const isDropdownOpen = !limitReached && openSymptomId === row.id && (loading || list.length > 0 || row.name.trim().length >= 2);
 
   return (
     <section
@@ -234,3 +236,5 @@ const SymptomsSection: React.FC<SymptomsSectionProps> = ({
 };
 
 export default SymptomsSection;
+
+

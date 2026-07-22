@@ -421,4 +421,54 @@ export class AppointmentAppService {
       result: services
     };
   }
+
+  public async markAsNoShow(args: { appointmentId: string; reason?: string }) {
+    const appointment = this.repository.findById(args.appointmentId);
+    if (!appointment) {
+      throw new Error(`Appointment not found: ${args.appointmentId}`);
+    }
+
+    const newId = crypto.randomUUID();
+    
+    await TransactionManager.run((tx) => {
+      // 1. Mark as no show locally
+      this.repository.markAsNoShow(tx, {
+        id: newId,
+        appointmentId: args.appointmentId,
+        patientId: appointment.patientId,
+        doctorId: appointment.doctor_id,
+        markedByRole: 'system',
+        markedByUserId: 'system',
+        reason: args.reason || ''
+      });
+
+      // 2. Write Event Log to trigger SyncEngine
+      const eventId = crypto.randomUUID();
+      this.eventLogRepository.insert(tx, {
+        id: eventId,
+        action_type: 'APPOINTMENT_MARKED_NO_SHOW',
+        entity_type: 'appointment_no_show_actions',
+        entity_id: newId,
+        payload: JSON.stringify({
+          eventId,
+          entityType: 'appointment_no_show_actions',
+          operation: 'CREATE',
+          httpMethod: 'POST',
+          endpoint: `/appointments/${args.appointmentId}/no-show`,
+          payload: {
+            reason: args.reason || ''
+          },
+          headers: {}
+        }),
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    return { success: true };
+  }
+
+  public getClinicNoShowAnalytics(args: { startDate?: string, endDate?: string, search?: string }): any {
+    const data = this.repository.getClinicNoShowAnalytics(args);
+    return { data }; // Wrap in { data } to mimic API response
+  }
 }

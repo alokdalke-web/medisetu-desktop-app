@@ -107,8 +107,24 @@ const useAppointmentSymptoms = ({
   const seqRef = React.useRef<Record<string, number>>({});
   const lastQueryRef = React.useRef<Record<string, string>>({});
   const defaultLoadedRef = React.useRef<Record<string, boolean>>({});
-  const defaultSuggestionsCache = React.useRef<ClinicSymptomItem[] | null>(null);
-  const [triggerGetClinicSymptoms] = useLazyGetClinicSymptomsQuery();
+      const defaultSuggestionsCache = React.useRef<ClinicSymptomItem[] | null>(null);
+    const [triggerGetClinicSymptoms] = useLazyGetClinicSymptomsQuery();
+    const [createClinicSymptomMutation] = useCreateClinicSymptomMutation();
+
+    const handleCreateSymptom = React.useCallback(
+      async (symptomId: string, name: string) => {
+        try {
+          const resp = await createClinicSymptomMutation({ name, description: '' }).unwrap();
+          if (resp.success) {
+            toastInfo("Success", "Symptom added successfully.");
+            selectSuggestion(symptomId, { id: name, name, status: 'Active' });
+          }
+        } catch (error) {
+          console.error("Failed to create symptom", error);
+        }
+      },
+      [createClinicSymptomMutation, toastInfo]
+    );
 
   const loadDefaultSymptoms = React.useCallback(
     async (symptomId: string) => {
@@ -301,7 +317,9 @@ const useAppointmentSymptoms = ({
     showSymptomLimitToast,
     moveFirstSymptomToChip,
     commitSymptomInputToChip,
+    handleCreateSymptom,
   };
 };
 
 export default useAppointmentSymptoms;
+

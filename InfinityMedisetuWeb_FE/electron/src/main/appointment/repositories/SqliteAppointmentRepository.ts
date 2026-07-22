@@ -220,4 +220,103 @@ export class SqliteAppointmentRepository {
     const result = db.prepare(query).get(key) as { value: string } | undefined;
     return result ? result.value : null;
   }
+
+  public markAsNoShow(tx: Database.Database, data: {
+    id: string,
+    appointmentId: string,
+    patientId: string,
+    doctorId: string | null,
+    markedByRole: string,
+    markedByUserId: string,
+    reason: string
+  }): void {
+    // 1. Insert into appointment_no_show_actions
+    const stmtInsert = tx.prepare(`
+      INSERT INTO appointment_no_show_actions (id, appointment_id, patient_id, doctor_id, marked_by_role, marked_by_user_id, reason, sync_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+    `);
+    
+    stmtInsert.run(
+      data.id,
+      data.appointmentId,
+      data.patientId,
+      data.doctorId,
+      data.markedByRole,
+      data.markedByUserId,
+      data.reason || null
+    );
+
+    // 2. Update appointment status to 'No Show'
+    const stmtUpdate = tx.prepare(`
+      UPDATE appointments 
+      SET status = 'No Show'
+      WHERE id = ?
+    `);
+    
+    stmtUpdate.run(data.appointmentId);
+  }
+
+  public getClinicNoShowAnalytics(args: { startDate?: string, endDate?: string, search?: string }): any[] {
+    const db = dbManager.getConnection();
+    let query = `
+      SELECT 
+        p.id as patientId,
+        p.name as patientName,
+        p.phone as patientMobile,
+        d.name as doctorName,
+        a.id as latestAppointmentId,
+        'Consultation' as appointmentType,
+        a.date as appointmentDate,
+        a.time_slot as appointmentTime,
+        ns.reason as noShowReason,
+        ns.marked_by_role as noShowMarkedBy,
+        ns.created_at as createdAt,
+        (SELECT COUNT(*) FROM appointment_no_show_actions ns_sub WHERE ns_sub.patient_id = p.id) as totalNoShows,
+        (SELECT MIN(ns_sub2.created_at) FROM appointment_no_show_actions ns_sub2 WHERE ns_sub2.patient_id = p.id) as firstNoShowDate
+      FROM appointment_no_show_actions ns
+      JOIN appointments a ON ns.appointment_id = a.id
+      JOIN patients p ON ns.patient_id = p.id
+      LEFT JOIN doctors d ON ns.doctor_id = d.id
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+    if (args.startDate && args.endDate) {
+      query += ` AND a.date >= ? AND a.date <= ?`;
+      params.push(args.startDate, args.endDate);
+    }
+    
+    if (args.search) {
+      query += ` AND (p.name LIKE ? OR p.phone LIKE ?)`;
+      params.push(`%${args.search}%`, `%${args.search}%`);
+    }
+
+    // Group by patient to get only the latest no-show per patient
+    query += ` GROUP BY p.id ORDER BY a.date DESC, a.time_slot DESC`;
+
+    const rows = db.prepare(query).all(...params) as any[];
+
+    // Transform flat rows into nested JSON required by UI
+    return rows.map(row => ({
+      patient: {
+        id: row.patientId,
+        name: row.patientName,
+        mobile: row.patientMobile
+      },
+      doctor: {
+        name: row.doctorName
+      },
+      latestAppointment: {
+        id: row.latestAppointmentId,
+        appointmentType: row.appointmentType,
+        appointmentDate: row.appointmentDate,
+        appointmentTime: row.appointmentTime,
+        noShowReason: row.noShowReason,
+        noShowMarkedBy: row.noShowMarkedBy,
+        createdAt: row.createdAt
+      },
+      totalNoShows: row.totalNoShows,
+      firstNoShowDate: row.firstNoShowDate
+    }));
+  }
 }

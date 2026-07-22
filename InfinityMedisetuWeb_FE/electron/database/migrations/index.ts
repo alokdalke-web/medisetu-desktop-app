@@ -411,6 +411,41 @@ export function runMigrations(db: Database.Database) {
         ALTER TABLE event_log ADD COLUMN lamport_clock INTEGER DEFAULT 0;
         ALTER TABLE event_log ADD COLUMN synced_to_cloud BOOLEAN DEFAULT 0;
       `
+    },
+    {
+      version: 18,
+      up: `
+        CREATE TABLE IF NOT EXISTS appointment_no_show_actions (
+          id TEXT PRIMARY KEY,
+          appointment_id TEXT NOT NULL,
+          patient_id TEXT NOT NULL,
+          doctor_id TEXT,
+          marked_by_role TEXT NOT NULL,
+          marked_by_user_id TEXT,
+          reason TEXT,
+          action_taken TEXT,
+          sync_status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          cloud_id TEXT
+        );
+      `
+    },
+    {
+      version: 19,
+      up: `
+        CREATE TABLE IF NOT EXISTS clinic_symptoms (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          status TEXT DEFAULT 'Active',
+          sync_status TEXT DEFAULT 'synced',
+          cloud_id TEXT,
+          is_deleted BOOLEAN DEFAULT 0,
+          deleted_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `
     }
   ];
 

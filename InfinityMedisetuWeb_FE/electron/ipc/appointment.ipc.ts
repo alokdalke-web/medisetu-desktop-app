@@ -113,4 +113,24 @@ export function registerAppointmentIpcHandlers() {
       throw error;
     }
   });
+
+  ipcMain.handle('appointment:markAsNoShow', async (_event, args) => {
+    try {
+      logger.info(`[IPC] Handling appointment:markAsNoShow`);
+      return await appointmentAppService.markAsNoShow(args);
+    } catch (error) {
+      logger.error('[IPC] Error in appointment:markAsNoShow:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('appointment:getClinicNoShowAnalytics', async (_event, args) => {
+    try {
+      logger.info(`[IPC] Handling appointment:getClinicNoShowAnalytics`);
+      return appointmentAppService.getClinicNoShowAnalytics(args);
+    } catch (error) {
+      logger.error('[IPC] Error in appointment:getClinicNoShowAnalytics:', error);
+      throw error;
+    }
+  });
 }

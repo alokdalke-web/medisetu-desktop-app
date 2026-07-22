@@ -16,6 +16,8 @@ export interface IpcAPI {
     getAll: (date?: string) => Promise<any>;
     getById: (id: string) => Promise<any>;
     getMultipleServices: (id: string) => Promise<any>;
+    markAsNoShow: (args: { appointmentId: string; reason?: string }) => Promise<any>;
+    getClinicNoShowAnalytics: (args: { startDate?: string, endDate?: string, search?: string }) => Promise<any>;
   };
 
   prescription: {

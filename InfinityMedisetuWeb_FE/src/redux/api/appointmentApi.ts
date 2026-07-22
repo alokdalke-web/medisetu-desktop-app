@@ -556,11 +556,17 @@ updateAppointment: builder.mutation<
       any,
       { appointmentId: string; reason?: string }
     >({
-      query: ({ appointmentId, reason }) => ({
-        url: `/appointments/${appointmentId}/no-show`,
-        method: "POST",
-        body: { reason },
-      }),
+      queryFn: async ({ appointmentId, reason }) => {
+        try {
+          if (!window.ipcAPI?.appointment?.markAsNoShow) {
+            throw new Error("IPC API not found");
+          }
+          const res = await window.ipcAPI.appointment.markAsNoShow({ appointmentId, reason });
+          return { data: res };
+        } catch (error: any) {
+          return { error: { status: "CUSTOM_ERROR", error: error.message } };
+        }
+      },
       invalidatesTags: ["Appointment", "NoShowAnalytics"],
       // No-show changes the "No Shows" stat card + alerts — refresh dashboard live.
       onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
@@ -588,11 +594,17 @@ updateAppointment: builder.mutation<
       any,
       { startDate?: string; endDate?: string; search?: string }
     >({
-      query: (params) => ({
-        url: `/appointments/no-show/analytics/clinic`,
-        method: "GET",
-        params,
-      }),
+      queryFn: async (params) => {
+        try {
+          if (!window.ipcAPI?.appointment?.getClinicNoShowAnalytics) {
+            throw new Error("IPC API not found");
+          }
+          const res = await window.ipcAPI.appointment.getClinicNoShowAnalytics(params);
+          return { data: res };
+        } catch (error: any) {
+          return { error: { status: "CUSTOM_ERROR", error: error.message } };
+        }
+      },
       providesTags: ["NoShowAnalytics"],
     }),
 
