@@ -6,9 +6,11 @@ interface AppLoaderContextProps {
   startLoading: () => void;
   // Decrement loading count (e.g., when a query finishes)
   stopLoading: () => void;
+  // Current active loading count
+  loadingCount: number;
 }
 
-const AppLoaderContext = createContext<AppLoaderContextProps | undefined>(undefined);
+export const AppLoaderContext = createContext<AppLoaderContextProps | undefined>(undefined);
 
 export const AppLoaderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [loadingCount, setLoadingCount] = useState(0);
@@ -17,7 +19,7 @@ export const AppLoaderProvider: React.FC<{ children: ReactNode }> = ({ children 
   const stopLoading = () => setLoadingCount((c) => Math.max(c - 1, 0));
 
   return (
-    <AppLoaderContext.Provider value={{ startLoading, stopLoading }}>
+    <AppLoaderContext.Provider value={{ startLoading, stopLoading, loadingCount }}>
       {children}
       {loadingCount > 0 && <AppLoader />}
     </AppLoaderContext.Provider>

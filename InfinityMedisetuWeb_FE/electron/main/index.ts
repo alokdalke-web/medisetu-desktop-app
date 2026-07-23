@@ -15,11 +15,13 @@ import { registerUsersIpcHandlers } from '../ipc/users.ipc.js';
 import { registerReportHandlers } from '../ipc/report.ipc.js';
 import { registerMedicineIpcHandlers } from '../ipc/medicine.ipc.js';
 import { registerClinicHandlers } from '../ipc/clinic.ipc.js';
+import { registerConnectivityIpcHandlers } from '../ipc/connectivity.ipc.js';
 import { PushSyncEngine } from '../src/main/sync/SyncEngine.js';
 import NodeIdentity from '../src/main/cluster/NodeIdentity.js';
 import DiscoveryService from '../src/main/cluster/DiscoveryService.js';
 import SyncServer from '../src/main/cluster/SyncServer.js';
 import SyncClient from '../src/main/cluster/SyncClient.js';
+import ConnectivityStateService from '../src/main/connectivity/ConnectivityStateService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,9 +95,11 @@ if (!gotTheLock) {
       registerReportHandlers();
       registerMedicineIpcHandlers();
       registerClinicHandlers();
+      registerConnectivityIpcHandlers();
 
       // Start Background Sync Worker
       PushSyncEngine.getInstance().start();
+      ConnectivityStateService.start();
 
       createWindow();
     } catch (error) {
@@ -117,6 +121,7 @@ if (!gotTheLock) {
 }
 
 app.on('before-quit', () => {
+  ConnectivityStateService.stop();
   SyncClient.stop();
   SyncServer.stop();
   DiscoveryService.stop();

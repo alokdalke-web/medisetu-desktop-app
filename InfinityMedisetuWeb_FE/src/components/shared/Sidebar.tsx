@@ -62,6 +62,7 @@ import {
 import BannerDisplay from "../banners/BannerDisplay";
 import EditPharmacyDetailsModal from "./Modals/EditPharmacyDetailsModal";
 import StatusChip from "./StatusChip";
+import { useOfflineGate } from "../../hooks/useOfflineGate";
 
 /* ✅ Mobile compact, desktop normal */
 const baseItem =
@@ -566,6 +567,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [callIntent, setCallIntent] = useState<CallIntent>("RECEPTION");
   const [, setSetupCompletionVersion] = useState(0);
   const { isDark } = useTheme();
+
+  const billingGate = useOfflineGate('billing');
+  const reportsGate = useOfflineGate('reports');
+  const settingsGate = useOfflineGate('clinicSettings');
 
   const { data: userData, isLoading: isUserLoading } = useGetUserQuery();
 
@@ -1161,7 +1166,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             );
           }
 
-          const isDisabled = isAdminSetupLocked && item.key !== "dashboard";
+          let offlineGate: { allowed: boolean; reason?: string } = { allowed: true, reason: undefined };
+          if (item.key === 'subscribedPatients' || item.key === 'pharmacySales' || item.key === 'pharmacyPatientSubscription') {
+            offlineGate = billingGate;
+          } else if (item.key === 'reports' || item.key === 'patientReports' || item.key === 'pharmacyReports') {
+            offlineGate = reportsGate;
+          } else if (item.key === 'configuration') {
+            offlineGate = settingsGate;
+          }
+
+          const isOfflineDisabled = !offlineGate.allowed;
+          const isDisabled = (isAdminSetupLocked && item.key !== "dashboard") || isOfflineDisabled;
           const isPremiumLocked = item.premiumOnly && isFreePlan;
           const active = isRouteActive(item.key, item.to, item.end);
           const isLabRoute = item.to.startsWith("/lab/");
@@ -1178,17 +1193,28 @@ const Sidebar: React.FC<SidebarProps> = ({
                     : undefined;
 
           if (isDisabled) {
+            const tooltipContent = isOfflineDisabled ? (
+              <div className="max-w-[220px] px-1 py-0.5">
+                <p className="text-[13px] font-semibold text-slate-900 dark:text-white">
+                  Offline Mode
+                </p>
+                <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-300">
+                  {offlineGate.reason}
+                </p>
+              </div>
+            ) : approvalLockedTooltip;
+
             return (
               <Tooltip
                 key={item.key}
-                content={approvalLockedTooltip}
+                content={tooltipContent}
                 showArrow
                 placement="right"
                 closeDelay={0}
               >
                 <div
                   aria-disabled="true"
-                  title="Available after account approval"
+                  title={isOfflineDisabled ? "Offline Mode" : "Available after account approval"}
                   className={`${baseItem} ${isCollapsed ? baseItemCollapsed : baseItemExpanded} ${disabledItem}`}
                 >
                   <span className={`${iconBox} ${iconBoxIdle}`}>

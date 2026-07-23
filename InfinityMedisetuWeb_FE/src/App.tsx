@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router";
 
 import AppRoutes from "./routes/AppRoutes";
 import { NetworkStatusBanner } from "./components/shared/NetworkStatusBanner";
-import SyncDebugPanel from "./components/shared/SyncDebugPanel";
+import { OfflineModeBanner } from "./components/shared/OfflineModeBanner";
 import { connectSocket } from "./services/socket";
 import { useSocketNotifications } from "./hooks/useSocketNotifications";
 import { useLocalSocketNotifications } from "./hooks/useLocalSocketNotifications";
@@ -229,7 +229,7 @@ function App() {
     <AppLoaderProvider>
       <LimitationsProvider>
         <NetworkStatusBanner />
-        <SyncDebugPanel />
+        <OfflineModeBanner />
         <SiteTour run={runTour} onFinish={handleTourFinish} userType={userType} />
 
         <AppRoutes />

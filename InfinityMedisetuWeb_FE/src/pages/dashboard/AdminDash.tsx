@@ -3,7 +3,7 @@ import { addToast } from "@heroui/react";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BsTelephone } from "react-icons/bs";
-import { FiCalendar, FiUserPlus, FiUsers } from "react-icons/fi";
+import { FiCalendar, FiUserPlus, FiUsers, FiWifiOff } from "react-icons/fi";
 import { HiOutlineClock } from "react-icons/hi";
 import { IoAlertCircleOutline } from "react-icons/io5";
 import { LuBell, LuBrain, LuCalendarCheck } from "react-icons/lu";
@@ -40,6 +40,7 @@ import DateFilterTabs, { type DateTab } from "./DateFilterTabs";
 import DonutOverviewCard, { type DonutItem } from "./DonutOverviewCard";
 import ClinicSetup from "./OnboardingDash/pages/ClinicSetup";
 import RevenueOverviewChart, { type ChartPoint } from "./RevenueOverviewChart";
+import { useConnectivityState } from "../../hooks/useConnectivityState";
 
 /* ---------------- helpers ---------------- */
 
@@ -806,6 +807,7 @@ const AdminDash = ({
   showRevenue?: boolean;
 }) => {
   const navigate = useNavigate();
+  const isOffline = useConnectivityState() !== 'online';
   // Get current user
   const authUser = useSelector((s: RootState) => s.auth.user);
   const { data: userData } = useGetUserQuery();
@@ -1530,7 +1532,7 @@ const AdminDash = ({
                   {/* Revenue + Donut Row */}
                   <div
                     id="tour-admin-charts"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr] gap-4 sm:gap-5"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr] gap-4 sm:gap-5 relative"
                   >
                     <RevenueOverviewChart
                       title="Revenue Overview"
@@ -1724,7 +1726,7 @@ const AdminDash = ({
                   {/* Bottom Row: Top Symptoms + Patient Overview */}
                   <div
                     id="tour-admin-reports-overview"
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 relative"
                   >
                     <TopSymptomsCard
                       symptoms={symptomStats}

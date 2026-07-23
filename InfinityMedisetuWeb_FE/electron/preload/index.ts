@@ -72,6 +72,21 @@ contextBridge.exposeInMainWorld('ipcAPI', {
     trigger: () => ipcRenderer.invoke('push_sync:trigger'),
   },
 
+  connectivity: {
+    getState: () => ipcRenderer.invoke('connectivity:getState'),
+    onStateChange: (callback: (state: string) => void) => {
+      const listener = (_event: any, state: string) => callback(state);
+      ipcRenderer.on('connectivity:state_change', listener);
+      return () => {
+        ipcRenderer.removeListener('connectivity:state_change', listener);
+      };
+    }
+  },
+
+  cluster: {
+    getPeers: () => ipcRenderer.invoke('cluster:getPeers'),
+  },
+
   auth: {
     setCredentials: (credentials: { token: string; userId: string; clinicId?: string }) => 
       ipcRenderer.invoke('auth:setCredentials', credentials),

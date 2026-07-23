@@ -25,7 +25,8 @@ import { useLocation } from "react-router";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
 import FullscreenToggle from "../common/FullscreenToggle";
 import LiveClock from "../common/LiveClock";
-import SyncStatusBar from "./SyncStatusBar";
+import SyncStatusPanel from "./SyncStatusPanel";
+import { OfflineGuideModal } from "./OfflineGuideModal";
 /* ---------------- helpers ---------------- */
 
 function useIsMobile(breakpointPx = 640) {
@@ -293,14 +294,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenLeft, onOpenRight }) => {
             </button>
           )}
 
-
-
-                      <div className="hidden sm:block">
-              <SyncStatusBar />
-            </div>
-            <div className="hidden sm:block">
-              <LiveClock />
-            </div>
+          <div className="hidden sm:block">
+            <LiveClock />
+          </div>
           {/* Role Switcher Dropdown */}
           <RoleSwitcherDropdown />
           <div className="hidden sm:block">
@@ -357,6 +353,15 @@ const Header: React.FC<HeaderProps> = ({ onOpenLeft, onOpenRight }) => {
               Open Guidelines
             </span>
           </div>
+
+          <div className="relative group inline-block">
+            <OfflineGuideModal />
+          </div>
+
+          <div className="relative group inline-block">
+            <SyncStatusPanel />
+          </div>
+
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button

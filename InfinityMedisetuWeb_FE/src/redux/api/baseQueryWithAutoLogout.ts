@@ -38,19 +38,8 @@ function isSuccessButParseError(err: any) {
 }
 
 const CLOUD_WHITELIST_PREFIXES = [
-  "/users/login",
-  "/users/social-login",
-  "/users/register",
-  "/users/request-registration",
-  "/users/verify-otp",
-  "/users/adduser",
-  "/users/request-password-reset",
-  "/users/reset-password",
-  "/users/send-verification",
-  "/users/verify-email",
-  "/users/verify-subscription",
-  "/users/onboarding/progress",
-  "/users/onboarding/submit",
+  "/users",
+  "/subscription",
   "/subscriptions",
   "/limitations",
   "/doctor",

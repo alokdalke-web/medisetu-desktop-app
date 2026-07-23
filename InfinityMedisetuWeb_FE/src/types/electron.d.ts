@@ -48,6 +48,15 @@ export interface IpcAPI {
     trigger: () => Promise<void>;
   };
 
+  connectivity: {
+    getState: () => Promise<'online' | 'lan_sync' | 'island'>;
+    onStateChange: (callback: (state: 'online' | 'lan_sync' | 'island') => void) => () => void;
+  };
+
+  cluster: {
+    getPeers: () => Promise<any[]>;
+  };
+
   auth: {
     setCredentials: (credentials: { token: string; userId: string; clinicId?: string }) => Promise<any>;
   };

@@ -14,6 +14,8 @@ import DoctorDash from "./DoctorDash";
 import LabDash from "./LabDash";
 import ReceptionistDash from "./ReceptionistDash";
 import SuperAdminDash from "./SuperAdminDash";
+import { useConnectivityState } from "../../hooks/useConnectivityState";
+import { FiWifiOff } from "react-icons/fi";
 
 const pickUser = (data: any) => data?.user ?? data;
 
@@ -35,6 +37,8 @@ const Dashboard: FC = () => {
 
   // ✅ Use effective user type for dashboard rendering (respects role switching)
   const effectiveUserType = useEffectiveUserType();
+  const connectionState = useConnectivityState();
+  const isOffline = connectionState !== 'online';
 
   const { data: clinicsData, isLoading: isClinicsLoading } = useGetAllClinicsQuery(undefined, {
     skip: !isAdmin && !isDoctor,
@@ -82,21 +86,52 @@ const Dashboard: FC = () => {
     return <Navigate to="/clinic-setup" replace />;
   }
 
+  const renderDashboard = (Component: JSX.Element) => {
+    const isDisableTarget = actualUserType === 'Admin' || actualUserType === 'Doctor' || actualUserType === 'Receptionist';
+    
+    if (isOffline && isDisableTarget) {
+      return (
+        <div className="relative w-full h-full min-h-screen overflow-hidden bg-slate-50/50 dark:bg-[#0b1321]">
+          {/* Blur the actual dashboard in the background directly */}
+          <div className="pointer-events-none select-none h-full w-full blur-[4px] opacity-60 dark:opacity-40 transition-all duration-300 scale-[0.98]">
+             {Component}
+          </div>
+          {/* Centered Offline Card */}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8">
+            <div className="w-full max-w-[340px] rounded-2xl border border-red-200 bg-red-50/95 px-6 py-8 text-center shadow-[0_20px_60px_rgba(239,68,68,0.15)] backdrop-blur-xl dark:border-red-900/40 dark:bg-red-950/90">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 shadow-sm">
+                <FiWifiOff className="h-7 w-7 text-red-500 dark:text-red-400" />
+              </div>
+              <h2 className="text-[18px] font-bold text-red-950 dark:text-red-50 mb-2">
+                Dashboard Unavailable
+              </h2>
+              <p className="text-[13px] font-medium leading-5 text-red-900/80 dark:text-red-200/80">
+                Analytical insights and dashboard overviews require an active connection. You can still manage patients and appointments from the sidebar.
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    return Component;
+  };
+
   // ✅ Super Admin gets their own dashboard
   if (actualUserType === "Super_Admin") return <SuperAdminDash />;
 
   // ✅ Non-admin users get their specific dashboards
   if (actualUserType === "Receptionist") {
-    return <ReceptionistDash />;
+    return renderDashboard(<ReceptionistDash />);
   }
   if (actualUserType === "Pharmacist") {
     return <Navigate to="/pharmacy/dashboard" replace />;
   }
 
   // ✅ Use effectiveUserType for dashboard selection (respects admin role switching)
-  if (effectiveUserType === "Lab_Assistant") return <LabDash />;
-  if (effectiveUserType === "Doctor") return <DoctorDash />;
-  if (effectiveUserType === "Receptionist") return <ReceptionistDash />;
+  if (effectiveUserType === "Lab_Assistant") return renderDashboard(<LabDash />);
+  if (effectiveUserType === "Doctor") return renderDashboard(<DoctorDash />);
+  if (effectiveUserType === "Receptionist") return renderDashboard(<ReceptionistDash />);
   if (effectiveUserType === "Pharmacist") {
     return <Navigate to="/pharmacy/dashboard" replace />;
   }
@@ -104,7 +139,7 @@ const Dashboard: FC = () => {
   // ✅ Admin (no role switch active) gets AdminDash
   if (isAdmin) {
     const hasAdminDoctorAccess = !!user?.isAdminDoctorAccess;
-    return (
+    return renderDashboard(
       <AdminDash
         showDoctorStats={hasAdminDoctorAccess}
         showRevenue={showRevenueCard}
