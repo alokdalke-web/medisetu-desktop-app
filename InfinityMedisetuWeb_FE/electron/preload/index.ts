@@ -50,6 +50,21 @@ contextBridge.exposeInMainWorld('ipcAPI', {
 
   sync: {
     start: () => ipcRenderer.invoke('sync:start'),
+    getStatus: () => ipcRenderer.invoke('sync:status'),
+    onStateChange: (callback: (state: string) => void) => {
+      const listener = (_event: any, data: any) => callback(data.state);
+      ipcRenderer.on('sync:state_change', listener);
+      return () => {
+        ipcRenderer.removeListener('sync:state_change', listener);
+      };
+    },
+    onPushProgress: (callback: (data: any) => void) => {
+      const listener = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('push_sync:progress', listener);
+      return () => {
+        ipcRenderer.removeListener('push_sync:progress', listener);
+      };
+    }
   },
 
   pushSync: {
@@ -73,3 +88,4 @@ contextBridge.exposeInMainWorld('ipcAPI', {
     getAll: () => ipcRenderer.invoke('medicine:getAll'),
   }
 });
+

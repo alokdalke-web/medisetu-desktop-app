@@ -14,23 +14,6 @@ export type DoctorPrescriptionTypeResponse = {
   prescriptionType: DoctorPrescriptionType;
 };
 
-const normalizeDoctorPrescriptionTypeResponse = (
-  res: any,
-): DoctorPrescriptionTypeResponse => {
-  const prescriptionType =
-    res?.data?.prescriptionType ||
-    res?.result?.prescriptionType ||
-    res?.prescriptionType ||
-    "Manual";
-
-  return {
-    success: Boolean(res?.success),
-    message: res?.message,
-    prescriptionType:
-      prescriptionType === "Digital" ? "Digital" : "Manual",
-  };
-};
-
 export const prescriptionApi = createApi({
   reducerPath: "prescriptionApi",
   baseQuery: baseQueryWithAutoLogout,

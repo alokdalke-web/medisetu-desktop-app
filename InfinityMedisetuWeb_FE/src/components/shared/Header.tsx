@@ -25,6 +25,7 @@ import { useLocation } from "react-router";
 import RoleSwitcherDropdown from "./RoleSwitcherDropdown";
 import FullscreenToggle from "../common/FullscreenToggle";
 import LiveClock from "../common/LiveClock";
+import SyncStatusBar from "./SyncStatusBar";
 /* ---------------- helpers ---------------- */
 
 function useIsMobile(breakpointPx = 640) {
@@ -294,9 +295,12 @@ const Header: React.FC<HeaderProps> = ({ onOpenLeft, onOpenRight }) => {
 
 
 
-          <div className="hidden sm:block">
-            <LiveClock />
-          </div>
+                      <div className="hidden sm:block">
+              <SyncStatusBar />
+            </div>
+            <div className="hidden sm:block">
+              <LiveClock />
+            </div>
           {/* Role Switcher Dropdown */}
           <RoleSwitcherDropdown />
           <div className="hidden sm:block">
@@ -482,3 +486,4 @@ const Header: React.FC<HeaderProps> = ({ onOpenLeft, onOpenRight }) => {
 };
 
 export default Header;
+

@@ -27,6 +27,25 @@ export interface IpcAPI {
 
   sync: {
     start: () => Promise<any>;
+    getStatus: () => Promise<{ state: string }>;
+    onStateChange: (callback: (state: string) => void) => () => void;
+    onPushProgress: (callback: (data: {
+      isOnline: boolean;
+      isSyncing: boolean;
+      pendingCount: number;
+      currentAction: string;
+    }) => void) => () => void;
+  };
+
+  pushSync: {
+    getStatus: () => Promise<{
+      isOnline: boolean;
+      isSyncing: boolean;
+      pendingCount: number;
+      failedCount: number;
+      hasAuthToken: boolean;
+    }>;
+    trigger: () => Promise<void>;
   };
 
   auth: {

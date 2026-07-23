@@ -460,7 +460,7 @@ export class AppointmentAppService {
           },
           headers: {}
         }),
-        timestamp: new Date().toISOString()
+        // timestamp: new Date().toISOString()
       });
     });
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { BrowserWindow } from 'electron';
 import DatabaseManager from '../../../database/DatabaseManager';
 import { EventLogRepository, type SyncEventPayload } from '../infrastructure/repositories/EventLogRepository';
 import logger from '../../../utils/logger';
@@ -14,7 +15,7 @@ export class PushSyncEngine {
   // The backend API base URL
   private readonly API_BASE_URL = 'http://localhost:5000/api/v1'; // TODO: inject from env/config
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): PushSyncEngine {
     if (!PushSyncEngine.instance) {
@@ -31,7 +32,7 @@ export class PushSyncEngine {
 
   public start() {
     logger.info('Starting Sync Engine background worker...');
-    
+
     // Immediate check
     this.checkConnectivity();
 
@@ -59,16 +60,40 @@ export class PushSyncEngine {
         }
         this.runSyncLoop();
       } else {
-        this.isOnline = false;
+        if (this.isOnline) {
+          this.isOnline = false;
+          this.broadcastProgress(DatabaseManager.getConnection(), 'Offline');
+        }
       }
     } catch (e) {
-      this.isOnline = false;
+      if (this.isOnline) {
+        this.isOnline = false;
+        this.broadcastProgress(DatabaseManager.getConnection(), 'Offline');
+      }
     }
   }
 
   public triggerImmediateSync() {
     if (this.isOnline && !this.isSyncing) {
       this.runSyncLoop();
+    }
+  }
+
+  private broadcastProgress(db: any, currentAction: string = '') {
+    try {
+      const localNodeId = NodeIdentity.getNodeId();
+      const count = this.eventLogRepository.getPendingEventsCount(db, localNodeId);
+      const windows = BrowserWindow.getAllWindows();
+      if (windows.length > 0) {
+        windows[0].webContents.send('push_sync:progress', {
+          isOnline: this.isOnline,
+          isSyncing: this.isSyncing,
+          pendingCount: count,
+          currentAction
+        });
+      }
+    } catch (e) {
+      logger.error('Failed to broadcast push sync progress', e);
     }
   }
 
@@ -81,6 +106,7 @@ export class PushSyncEngine {
 
     this.isSyncing = true;
     const db = DatabaseManager.getConnection();
+    this.broadcastProgress(db, 'Starting sync...');
 
     try {
       while (this.isOnline) {
@@ -93,6 +119,7 @@ export class PushSyncEngine {
 
         const event = events[0];
         logger.info(`SyncEngine: Processing event ${event.id} (${event.action_type})`);
+        this.broadcastProgress(db, `Syncing ${event.action_type}...`);
 
         try {
           const payload: SyncEventPayload = JSON.parse(event.payload);
@@ -144,7 +171,7 @@ export class PushSyncEngine {
                   logger.info(`SyncEngine: Rewrote reportCard appointmentId to cloud_id ${apptRow.cloud_id}`);
                 }
               }
-              
+
               // 3. Map medicineId in prescriptions
               if (Array.isArray(payload.payload.prescriptions)) {
                 for (const rx of payload.payload.prescriptions) {
@@ -161,24 +188,24 @@ export class PushSyncEngine {
               logger.error('SyncEngine: Failed to map cloud_ids in report_cards', e);
             }
           }
-            // Map endpoint UUIDs (e.g. for no-show)
-            if (payload.entityType === 'appointment_no_show_actions' && payload.endpoint) {
-              try {
-                const match = payload.endpoint.match(/\/appointments\/([a-f0-9\-]+)\/no-show/);
-                if (match && match[1]) {
-                  const localId = match[1];
-                  const apptRow = db.prepare(SELECT cloud_id FROM appointments WHERE id = ?).get(localId) as any;
-                  if (apptRow && apptRow.cloud_id) {
-                    payload.endpoint = payload.endpoint.replace(localId, apptRow.cloud_id);
-                    logger.info(SyncEngine: Rewrote endpoint to \);
-                  }
+          // Map endpoint UUIDs (e.g. for no-show)
+          if (payload.entityType === 'appointment_no_show_actions' && payload.endpoint) {
+            try {
+              const match = payload.endpoint.match(/\/appointments\/([a-f0-9\-]+)\/no-show/);
+              if (match && match[1]) {
+                const localId = match[1];
+                const apptRow = db.prepare(`SELECT cloud_id FROM appointments WHERE id = ?`).get(localId) as any;
+                if (apptRow && apptRow.cloud_id) {
+                  payload.endpoint = payload.endpoint.replace(localId, apptRow.cloud_id);
+                  logger.info(`SyncEngine: Rewrote endpoint to ${payload.endpoint}`);
                 }
-              } catch (e) {
-                logger.error('SyncEngine: Failed to map endpoint cloud_id for no-show', e);
               }
+            } catch (e) {
+              logger.error('SyncEngine: Failed to map endpoint cloud_id for no-show', e);
             }
+          }
 
-            // 2. Execute HTTP Request
+          // 2. Execute HTTP Request
           const response = await axios({
             method: payload.httpMethod,
             url: `${this.API_BASE_URL}${payload.endpoint}`,
@@ -191,11 +218,11 @@ export class PushSyncEngine {
 
           // 3. Handle Success
           logger.info(`SyncEngine: Successfully synced event ${event.id}`);
-          
+
           // Check if it was a CREATE request and we got a cloud_id back
           if (payload.operation === 'CREATE' && response.data && response.data.result && response.data.result.id) {
             const cloudId = response.data.result.id;
-            
+
             // Need to update the domain table with the cloud_id
             let tableName = '';
             if (payload.entityType === 'patient') tableName = 'patients';
@@ -212,31 +239,34 @@ export class PushSyncEngine {
 
           // 4. Mark event synced
           this.eventLogRepository.markEventSynced(db, event.id);
-          } catch (error: any) {
-            logger.error(SyncEngine: Failed to sync event \, error);
-            
-            // Detect 409 Conflict (could add more specific handling later)
-            let errorMsg = error.message;
-            if (error.response) {
-              errorMsg = HTTP \: \;
-              
-              if (error.response.status === 404) {
-                logger.warn(SyncEngine: Entity not found on cloud (404). Skipping event \ to unblock queue.);
-                this.eventLogRepository.markEventSynced(db, event.id);
-                continue;
-              }
-            }
+          this.broadcastProgress(db);
+        } catch (error: any) {
+          logger.error(`SyncEngine: Failed to sync event ${event.id}`, error);
 
-            // 5. Mark event failed and increment retry_count
+          // Detect 409 Conflict (could add more specific handling later)
+          let errorMsg = error.message;
+          if (error.response) {
+            errorMsg = `HTTP ${error.response.status}: ${JSON.stringify(error.response.data)}`;
+
+            if (error.response.status === 404) {
+              logger.warn(`SyncEngine: Entity not found on cloud (404). Skipping event ${event.id} to unblock queue.`);
+              this.eventLogRepository.markEventSynced(db, event.id);
+              this.broadcastProgress(db);
+              continue;
+            }
+          }
+
+          // 5. Mark event failed and increment retry_count
           this.eventLogRepository.markEventFailed(db, event.id, errorMsg);
 
           // Stop loop for now if we hit an error to preserve sequential ordering.
           // Will retry on next periodic check.
-          break; 
+          break;
         }
       }
     } finally {
       this.isSyncing = false;
+      this.broadcastProgress(db, 'Idle');
     }
   }
 

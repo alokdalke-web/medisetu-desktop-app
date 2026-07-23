@@ -12,7 +12,10 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "prepare": "husky",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder --win -c.extraMetadata.main=dist-electron/index.js",
+    "publish": "npm run build && electron-builder --win -p always -c.extraMetadata.main=dist-electron/index.js"
   },
   "dependencies": {
     "@adi-prasetyo/react-joyride": "^2.9.3-adp.1",
@@ -30,7 +33,6 @@
     "@types/react-color": "^3.0.13",
     "axios": "^1.12.2",
     "better-sqlite3": "^12.11.1",
-    "bufferutil": "^4.1.0",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.19",
@@ -65,7 +67,6 @@
     "tailwindcss": "^4.1.13",
     "tinymce": "^8.3.2",
     "use-debounce": "^10.0.6",
-    "utf-8-validate": "^6.0.6",
     "xlsx": "^0.18.5",
     "zod": "^4.1.11"
   },
@@ -97,6 +98,36 @@
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "eslint --fix"
+    ]
+  },
+  "build": {
+    "appId": "com.infinitymedisetu.app",
+    "productName": "Infinity Medi Setu",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist",
+      "dist-electron",
+      "node_modules"
+    ],
+    "win": {
+      "target": [
+        "nsis-web"
+      ]
+    },
+    "nsisWeb": {
+      "artifactName": "-WebSetup-.",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "alokdalke-web",
+        "repo": "medisetu-desktop-app"
+      }
     ]
   }
 }

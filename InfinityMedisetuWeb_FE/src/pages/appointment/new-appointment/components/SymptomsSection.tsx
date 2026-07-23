@@ -51,7 +51,7 @@ const SymptomsSection: React.FC<SymptomsSectionProps> = ({
     showLimitToast,
   commitInputToChip,
   moveFirstSymptomToChip,
-  handleCreateSymptom,
+  
 }) => {
   const searchTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isSelectingRef = React.useRef(false);

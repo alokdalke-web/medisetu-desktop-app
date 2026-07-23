@@ -637,17 +637,25 @@ export const subscriptionApi = createApi({
       PaymentTransactionsResponse,
       PaymentTransactionsArgs
     >({
-      queryFn: async (args) => {
-        try {
-          if (!window.ipcAPI?.dashboard) {
-            throw new Error("Local database IPC API not available");
-          }
-          const result = await window.ipcAPI.dashboard.getPaymentTransactions(args);
-          return { data: result as PaymentTransactionsResponse };
-        } catch (error: any) {
-          return { error: { status: "CUSTOM_ERROR", error: error.message || "Failed to fetch payment transactions" } };
-        }
-      },
+      query: (args) => ({
+        url: "/appointments/payment-transactions",
+        method: "GET",
+        params: {
+          pageNumber: args.pageNumber,
+          pageSize: args.pageSize,
+
+          ...(args.search ? { search: args.search } : {}),
+          ...(args.startDate ? { startDate: args.startDate } : {}),
+          ...(args.endDate ? { endDate: args.endDate } : {}),
+
+          ...(args.doctorId ? { doctorId: args.doctorId } : {}),
+          ...(args.patientId ? { patientId: args.patientId } : {}),
+          ...(args.paymentMode ? { paymentMode: args.paymentMode } : {}),
+          ...(args.refundMode ? { refundMode: args.refundMode } : {}),
+          ...(args.paymentStatus ? { paymentStatus: args.paymentStatus } : {}),
+          ...(args.entryType ? { entryType: args.entryType } : {}),
+        },
+      }),
       transformResponse: (res: any, _meta, arg): PaymentTransactionsResponse => {
         const data = Array.isArray(res?.data) ? res.data : [];
         const metadata: Pagination =

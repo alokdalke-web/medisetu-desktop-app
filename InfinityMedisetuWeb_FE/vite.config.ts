@@ -32,7 +32,7 @@ export default defineConfig({
   },
 
   plugins: [
-    react(), 
+    react(),
     tailwindcss(),
     electron({
       main: {
@@ -40,7 +40,7 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ['better-sqlite3', 'electron-log', 'sqlite3', 'path', 'url', 'fs', 'electron']
+              external: ['better-sqlite3', 'electron-log', 'sqlite3', 'path', 'url', 'fs', 'electron', 'bufferutil', 'utf-8-validate']
             }
           }
         }
@@ -50,7 +50,7 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ['better-sqlite3', 'electron-log', 'sqlite3', 'path', 'url', 'fs', 'electron']
+              external: ['better-sqlite3', 'electron-log', 'sqlite3', 'path', 'url', 'fs', 'electron', 'bufferutil', 'utf-8-validate']
             }
           }
         }

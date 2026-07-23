@@ -114,7 +114,7 @@ const useAppointmentSymptoms = ({
     const handleCreateSymptom = React.useCallback(
       async (symptomId: string, name: string) => {
         try {
-          const resp = await createClinicSymptomMutation({ name, description: '' }).unwrap();
+          const resp = await createClinicSymptomMutation({ name, description: '', status: 'Active' }).unwrap();
           if (resp.success) {
             toastInfo("Success", "Symptom added successfully.");
             selectSuggestion(symptomId, { id: name, name, status: 'Active' });

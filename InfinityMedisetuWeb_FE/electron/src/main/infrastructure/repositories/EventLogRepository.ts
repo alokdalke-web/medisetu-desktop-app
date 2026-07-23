@@ -60,6 +60,15 @@ export class EventLogRepository {
     return stmt.all(nodeId, limit) as EventLogEntry[];
   }
 
+  public getPendingEventsCount(db: Database.Database, nodeId: string): number {
+    const stmt = db.prepare(`
+      SELECT COUNT(*) as count FROM event_log 
+      WHERE synced_to_cloud = 0 AND retry_count < 5 AND node_id = ?
+    `);
+    const row = stmt.get(nodeId) as { count: number };
+    return row.count;
+  }
+
   public getEventsAfterClock(db: Database.Database, lamportClock: number): EventLogEntry[] {
     const stmt = db.prepare(`
       SELECT * FROM event_log 

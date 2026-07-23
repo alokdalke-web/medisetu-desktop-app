@@ -199,7 +199,7 @@ export const medicineApi = createApi({
     }),
 
     searchMedicineAll: builder.query<any, SearchMedicineAllArgs>({
-      queryFn: async ({ q, city, per_page, search_term, url }) => {
+      queryFn: async ({ q, search_term }) => {
         try {
           if (typeof window !== 'undefined' && (window as any).ipcAPI) {
             const result = await (window as any).ipcAPI.medicine.search({ query: q || search_term || '' });
@@ -417,7 +417,7 @@ export const medicineApi = createApi({
       },
       { medicine_name?: string; composition?: string; page?: number; limit?: number }
     >({
-      queryFn: async ({ medicine_name, composition, page = 1, limit = 5 }) => {
+      queryFn: async ({ medicine_name, composition }) => {
         try {
           if (typeof window !== 'undefined' && (window as any).ipcAPI) {
             const query = medicine_name || composition || '';
