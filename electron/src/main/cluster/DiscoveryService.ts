@@ -23,19 +23,13 @@ class DiscoveryService {
   private broadcastInterval: NodeJS.Timeout | null = null;
   private localIp: string;
   private peerAvailabilitySubscribers: ((hasPeers: boolean) => void)[] = [];
-  private pairingResponseSubscribers: ((response: any) => void)[] = [];
+
 
   public onPeerAvailabilityChange(callback: (hasPeers: boolean) => void) {
     this.peerAvailabilitySubscribers.push(callback);
   }
 
-  public onPairingResponse(callback: (response: any) => void) {
-    this.pairingResponseSubscribers.push(callback);
-  }
 
-  public removePairingResponseListener(callback: (response: any) => void) {
-    this.pairingResponseSubscribers = this.pairingResponseSubscribers.filter(cb => cb !== callback);
-  }
 
   private notifyPeerAvailabilityChange(hasPeers: boolean) {
     for (const callback of this.peerAvailabilitySubscribers) {
@@ -156,24 +150,7 @@ class DiscoveryService {
     });
   }
 
-  public broadcastPairingRequest(code: string, replyPort: number) {
-    const payload = JSON.stringify({
-      type: 'pairing_request',
-      nodeId: NodeIdentity.getNodeId(),
-      name: os.hostname(),
-      code,
-      replyPort
-    });
-    
-    const broadcastAddresses = this.getBroadcastAddresses();
-    broadcastAddresses.forEach(bcast => {
-      this.client.send(payload, this.PORT, bcast, (err) => {
-        if (err) {
-           logger.error(`[DiscoveryService] Failed to broadcast pairing_request to ${bcast}: ${err.message}`);
-        }
-      });
-    });
-  }
+
 
   private cleanupStalePeers() {
     const now = Date.now();

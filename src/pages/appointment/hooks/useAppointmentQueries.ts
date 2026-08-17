@@ -170,13 +170,15 @@ export const useAppointmentQueries = ({
         (user as { result?: { id?: string }; id?: string })?.result?.id ??
         (user as { id?: string })?.id;
       if (userId) args.doctorId = userId;
+    } else if (selectedDoctorId) {
+      args.doctorId = selectedDoctorId;
     }
 
     if (tab !== "all") args.appointmentStatus = tab;
     if (debouncedSearch.trim()) args.search = debouncedSearch.trim();
 
     return args;
-  }, [calStartDate, calEndDate, calMode, selectedDateYmd, user, isEffectivelyDoctor, tab, debouncedSearch]);
+  }, [calStartDate, calEndDate, calMode, selectedDateYmd, user, isEffectivelyDoctor, tab, debouncedSearch, selectedDoctorId]);
 
   const {
     data: calData,

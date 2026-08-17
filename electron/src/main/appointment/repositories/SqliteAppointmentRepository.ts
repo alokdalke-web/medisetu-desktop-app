@@ -114,6 +114,10 @@ export class SqliteAppointmentRepository {
         filtered = filtered.filter(r => r.patientId === args.patientId);
       }
 
+      if (args.doctorId) {
+        filtered = filtered.filter(r => r.doctor_id === args.doctorId);
+      }
+
       if (args.search) {
         const q = args.search.toLowerCase();
         filtered = filtered.filter(r => 

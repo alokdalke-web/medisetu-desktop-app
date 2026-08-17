@@ -129,12 +129,5 @@ contextBridge.exposeInMainWorld('ipcAPI', {
   config: {
     getBackendUrl: () => ipcRenderer.invoke('config:getBackendUrl'),
     setBackendUrl: (url: string) => ipcRenderer.invoke('config:setBackendUrl', url)
-  },
-
-  clinic: {
-    generatePairingCode: () => ipcRenderer.invoke('clinic:generatePairingCode'),
-    pairWithCode: (code: string) => ipcRenderer.invoke('clinic:pairWithCode', code),
-    setupNewClinic: () => ipcRenderer.invoke('clinic:setupNewClinic'),
   }
 });
-

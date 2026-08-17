@@ -468,17 +468,7 @@ export function runMigrations(db: Database.Database) {
           ON event_log(node_id);
       `
     },
-    {
-      version: 22,
-      up: `
-        CREATE TABLE IF NOT EXISTS pairing_codes (
-          code TEXT PRIMARY KEY,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          expires_at DATETIME NOT NULL,
-          used INTEGER DEFAULT 0
-        );
-      `
-    },
+
     {
       version: 23,
       up: `
