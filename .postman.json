@@ -1,0 +1,721 @@
+{
+  "info": {
+    "_postman_id": "medisetu-api-collection",
+    "name": "MediSetu API",
+    "description": "MediSetu Healthcare Management Platform API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"password123\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/login",
+              "host": ["{{base_url}}"],
+              "path": ["users", "login"]
+            }
+          }
+        },
+        {
+          "name": "Social Login (Google)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"google\",\n  \"idToken\": \"your-google-id-token\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/social-login",
+              "host": ["{{base_url}}"],
+              "path": ["users", "social-login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"userType\": \"doctor\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/register",
+              "host": ["{{base_url}}"],
+              "path": ["users", "register"]
+            }
+          }
+        },
+        {
+          "name": "Request Registration (OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/request-registration",
+              "host": ["{{base_url}}"],
+              "path": ["users", "request-registration"]
+            }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["users", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Request Password Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"captchaToken\": \"optional-captcha-token\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/request-password-reset",
+              "host": ["{{base_url}}"],
+              "path": ["users", "request-password-reset"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"password\": \"new-password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["users", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Send Email Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/send-verification",
+              "host": ["{{base_url}}"],
+              "path": ["users", "send-verification"]
+            }
+          }
+        },
+        {
+          "name": "Verify Email Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/verify-email/verification-token",
+              "host": ["{{base_url}}"],
+              "path": ["users", "verify-email", "verification-token"]
+            }
+          }
+        },
+        {
+          "name": "Update Admin Doctor Permission",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isAdminDoctorAccess\": true,\n  \"speciality\": \"General Practice\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/update-admin-permission-to-doctor",
+              "host": ["{{base_url}}"],
+              "path": ["users", "update-admin-permission-to-doctor"]
+            }
+          }
+        },
+        {
+          "name": "Update Payment History Visibility",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/users/update-payment-history",
+              "host": ["{{base_url}}"],
+              "path": ["users", "update-payment-history"]
+            }
+          }
+        },
+        {
+          "name": "Add User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@example.com\",\n  \"userType\": \"patient\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/adduser",
+              "host": ["{{base_url}}"],
+              "path": ["users", "adduser"]
+            }
+          }
+        },
+        {
+          "name": "Set Initial Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"initial-password123\",\n  \"token\": \"set-password-token\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/set-initial-password",
+              "host": ["{{base_url}}"],
+              "path": ["users", "set-initial-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "item": [
+        {
+          "name": "Get All Patients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/patient/all?pageNumber=1&pageSize=10&searchBy=&userStatus=Active",
+              "host": ["{{base_url}}"],
+              "path": ["users", "patient", "all"],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "searchBy",
+                  "value": ""
+                },
+                {
+                  "key": "userStatus",
+                  "value": "Active"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/patient/patient-id",
+              "host": ["{{base_url}}"],
+              "path": ["users", "patient", "patient-id"]
+            }
+          }
+        },
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Patient Name\",\n  \"email\": \"patient@example.com\",\n  \"mobile\": \"+1234567890\",\n  \"gender\": \"Male\",\n  \"age\": 45,\n  \"bloodGroup\": \"O+\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/patient",
+              "host": ["{{base_url}}"],
+              "path": ["users", "patient"]
+            }
+          }
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"patient-id\",\n  \"name\": \"Updated Patient Name\",\n  \"email\": \"updated@example.com\",\n  \"mobile\": \"+1234567890\",\n  \"gender\": \"Male\",\n  \"age\": 46,\n  \"bloodGroup\": \"O+\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/patient",
+              "host": ["{{base_url}}"],
+              "path": ["users", "patient"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "Get User Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/all/user?page=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["appointments", "all", "user"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/all/clicnic?pageNumber=1&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["appointments", "all", "clicnic"],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Clinic Appointment Details by Date",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/details/clinic?date=2024-01-15",
+              "host": ["{{base_url}}"],
+              "path": ["appointments", "details", "clinic"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-01-15"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Appointment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/appointments/appointment-id",
+              "host": ["{{base_url}}"],
+              "path": ["appointments", "appointment-id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/summary",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Get Report Cards by Patient ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports/card/all/patient-id?pageSize=10&pageNumber=1&typeOfPaginations=Appointments",
+              "host": ["{{base_url}}"],
+              "path": ["reports", "card", "all", "patient-id"],
+              "query": [
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "typeOfPaginations",
+                  "value": "Appointments"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "App Update",
+      "item": [
+        {
+          "name": "Get App Update Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/app-update",
+              "host": ["{{base_url}}"],
+              "path": ["app-update"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has expected structure', function () {",
+                  "  const json = pm.response.json();",
+                  "  // Backend returns {} when no config exists, or { data: {...} }",
+                  "  if (json.data) {",
+                  "    pm.expect(json.data).to.have.property('ios_force_update');",
+                  "    pm.expect(json.data).to.have.property('android_force_update');",
+                  "    pm.expect(json.data).to.have.property('ios_version');",
+                  "    pm.expect(json.data).to.have.property('android_version');",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create App Update Config",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ios_force_update\": false,\n  \"android_force_update\": false,\n  \"ios_url\": \"https://apps.apple.com/app/medisetu\",\n  \"android_url\": \"https://play.google.com/store/apps/details?id=com.infinity.medisetu\",\n  \"ios_version\": \"1.0.0\",\n  \"android_version\": \"1.0.0\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/app-update",
+              "host": ["{{base_url}}"],
+              "path": ["app-update"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test('Response contains config data', function () {",
+                  "  const json = pm.response.json();",
+                  "  const data = json.data || json;",
+                  "  pm.expect(data).to.have.property('ios_version');",
+                  "  pm.expect(data).to.have.property('android_version');",
+                  "  pm.expect(data).to.have.property('ios_force_update');",
+                  "  pm.expect(data).to.have.property('android_force_update');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update App Update Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ios_force_update\": true,\n  \"android_force_update\": true,\n  \"ios_url\": \"https://apps.apple.com/app/medisetu\",\n  \"android_url\": \"https://play.google.com/store/apps/details?id=com.infinity.medisetu\",\n  \"ios_version\": \"2.0.0\",\n  \"android_version\": \"2.0.0\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/app-update",
+              "host": ["{{base_url}}"],
+              "path": ["app-update"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains updated config', function () {",
+                  "  const json = pm.response.json();",
+                  "  const data = json.data || json;",
+                  "  pm.expect(data).to.have.property('ios_version');",
+                  "  pm.expect(data).to.have.property('android_version');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your-auth-token-here",
+      "type": "string"
+    }
+  ]
+}

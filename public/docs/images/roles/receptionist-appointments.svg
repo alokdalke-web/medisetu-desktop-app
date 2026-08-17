@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="Inter, Segoe UI, sans-serif">
+  <rect width="1600" height="900" fill="#f1f5f9"/>
+  <rect x="24" y="24" width="1552" height="852" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="3" stroke-dasharray="14 12"/>
+  <circle cx="800" cy="330" r="70" fill="#e8f5f2"/>
+  <rect x="770" y="300" width="60" height="52" rx="8" fill="none" stroke="#30887C" stroke-width="5"/>
+  <line x1="770" y1="316" x2="830" y2="316" stroke="#30887C" stroke-width="5"/>
+  <line x1="784" y1="292" x2="784" y2="308" stroke="#30887C" stroke-width="5"/>
+  <line x1="816" y1="292" x2="816" y2="308" stroke="#30887C" stroke-width="5"/>
+  <text x="800" y="470" text-anchor="middle" fill="#0f172a" font-size="30" font-weight="700">Appointments — list &amp; calendar views</text>
+  <text x="800" y="512" text-anchor="middle" fill="#94a3b8" font-size="19">Placeholder — replace this file with a real screenshot</text>
+</svg>

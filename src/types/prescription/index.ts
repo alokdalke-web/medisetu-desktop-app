@@ -1,0 +1,48 @@
+export type {
+  ActionRowProps,
+  ClinicalContextItemProps,
+  ClinicalDrawerProps,
+  CompletedReportCard,
+  PrescriptionClinicalContextBarProps,
+  RightDrawerProps,
+  SectionCardProps,
+  SectionTone,
+  VisitingDayCalendarProps,
+  PrescriptionPreviewSummaryProps,
+  PrescriptionWorkspaceHeaderProps,
+  PrescriptionCompletedListProps,
+  PrescriptionNoteBarProps,
+  QuickDoseDraft,
+  QuickDoseArg,
+  GlobalMedicineItem,
+  MedicineRowCallbacks,
+  StockAvailability,
+  MedicineSearchInputProps,
+  PrescriptionMedicineSidebarProps,
+} from "./workspace-ui";
+
+export type {
+  ToothAdditionalInformation,
+  ToothType,
+  ToothGeometry,
+  DentalChartProps,
+  ToothNoteModalProps,
+} from "./dental-chart";
+
+export type {
+  ColorPreset,
+  ColorSettingsProps,
+  DesignerSectionId,
+  DesignerToolbarProps,
+  FontOption,
+  FontPickerProps,
+  LivePreviewPanelProps,
+  PreviewZoom,
+  SettingsSectionProps,
+  TemplateColorKey,
+  TemplateColors,
+  TemplateDesignerPanelProps,
+  TemplateOption,
+  TemplatePickerProps,
+  TemplateThumbnailProps,
+} from "./template-designer";

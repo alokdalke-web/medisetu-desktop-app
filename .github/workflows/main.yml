@@ -1,0 +1,306 @@
+name: Medisetu Frontend CI/CD
+
+concurrency:
+  group: medisetu-frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: ["main", "staging"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Validate branch name
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        run: sh ./scripts/check-branch-name.sh "$BRANCH_NAME"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Secret scan
+        run: npx secretlint "**/*"
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  # Deploy to Staging (auto, every push to staging)
+  deploy-staging:
+    needs: build
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.deployment_status.outputs.status }}
+      result: ${{ job.status }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Package build
+        id: pkg
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          TAG="staging-${SHA:0:7}"
+          tar -czf release.tar.gz -C dist .
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "s3_key=frontend-releases/$TAG.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY_SECRET }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload build to S3
+        run: aws s3 cp release.tar.gz "s3://infinity-medisetu/${{ steps.pkg.outputs.s3_key }}"
+
+      - name: Deploy to Staging Server via SSM
+        env:
+          S3_KEY: ${{ steps.pkg.outputs.s3_key }}
+          INSTANCE_ID: ${{ secrets.STAGING_INSTANCE_ID }}
+        run: |
+          set -e
+
+          SCRIPT=$(cat <<EOF
+          set -e
+          BASE=/var/www/medisetu-frontend
+          RELEASE_DIR=/tmp/medisetu-release
+          rm -rf "\$RELEASE_DIR"
+          mkdir -p "\$RELEASE_DIR"
+
+          echo "Downloading build from S3..."
+          aws s3 cp "s3://infinity-medisetu/$S3_KEY" /tmp/release.tar.gz
+
+          echo "Extracting build..."
+          tar -xzf /tmp/release.tar.gz -C "\$RELEASE_DIR"
+
+          if [ -z "\$(ls -A "\$RELEASE_DIR")" ]; then
+            echo "No files found in \$RELEASE_DIR, aborting without touching BASE"
+            exit 1
+          fi
+
+          echo "Activating release..."
+          mkdir -p "\$BASE"
+          rm -rf "\$BASE"/*
+          cp -r "\$RELEASE_DIR"/* "\$BASE"/
+
+          echo "Listing BASE after deploy:"
+          ls -al "\$BASE"
+          echo "Deployment completed successfully!"
+          EOF
+          )
+
+          jq -n --arg script "$SCRIPT" '{commands: [$script]}' > ssm-params.json
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy frontend staging $S3_KEY" \
+            --parameters file://ssm-params.json \
+            --query "Command.CommandId" --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          echo "Polling for command completion (up to 10 minutes)..."
+          MAX_POLLS=60
+          POLL_INTERVAL=10
+          POLL=0
+          STATUS="Pending"
+          while [ $POLL -lt $MAX_POLLS ]; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            echo "Poll $((POLL+1))/$MAX_POLLS: status=$STATUS"
+            case "$STATUS" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            POLL=$((POLL+1))
+            sleep $POLL_INTERVAL
+          done
+
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+            --output json | tee ssm-output.json
+
+          STATUS=$(jq -r '.Status' ssm-output.json)
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::SSM command finished with status $STATUS"
+            exit 1
+          fi
+
+      - name: Set deployment status
+        id: deployment_status
+        if: always()
+        run: |
+          echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+  # Deploy to Production (auto, every push to main)
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.deployment_status.outputs.status }}
+      result: ${{ job.status }}
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Package build
+        id: pkg
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          TAG="prod-${SHA:0:7}"
+          tar -czf release.tar.gz -C dist .
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "s3_key=frontend-releases/$TAG.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY_SECRET }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload build to S3
+        run: aws s3 cp release.tar.gz "s3://infinity-medisetu/${{ steps.pkg.outputs.s3_key }}"
+
+      - name: Deploy to Production Server via SSM
+        env:
+          S3_KEY: ${{ steps.pkg.outputs.s3_key }}
+          INSTANCE_ID: ${{ secrets.PROD_INSTANCE_ID }}
+        run: |
+          set -e
+
+          SCRIPT=$(cat <<EOF
+          set -e
+          BASE=/var/www/medisetu-frontend
+          RELEASE_DIR=/tmp/medisetu-release
+          rm -rf "\$RELEASE_DIR"
+          mkdir -p "\$RELEASE_DIR"
+
+          echo "Downloading build from S3..."
+          aws s3 cp "s3://infinity-medisetu/$S3_KEY" /tmp/release.tar.gz
+
+          echo "Extracting build..."
+          tar -xzf /tmp/release.tar.gz -C "\$RELEASE_DIR"
+
+          if [ -z "\$(ls -A "\$RELEASE_DIR")" ]; then
+            echo "No files found in \$RELEASE_DIR, aborting without touching BASE"
+            exit 1
+          fi
+
+          echo "Activating release..."
+          mkdir -p "\$BASE"
+          rm -rf "\$BASE"/*
+          cp -r "\$RELEASE_DIR"/* "\$BASE"/
+
+          echo "Listing BASE after deploy:"
+          ls -al "\$BASE"
+          echo "Deployment completed successfully!"
+          EOF
+          )
+
+          jq -n --arg script "$SCRIPT" '{commands: [$script]}' > ssm-params.json
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy frontend prod $S3_KEY" \
+            --parameters file://ssm-params.json \
+            --query "Command.CommandId" --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          echo "Polling for command completion (up to 10 minutes)..."
+          MAX_POLLS=60
+          POLL_INTERVAL=10
+          POLL=0
+          STATUS="Pending"
+          while [ $POLL -lt $MAX_POLLS ]; do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            echo "Poll $((POLL+1))/$MAX_POLLS: status=$STATUS"
+            case "$STATUS" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            POLL=$((POLL+1))
+            sleep $POLL_INTERVAL
+          done
+
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "{Status:Status,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+            --output json | tee ssm-output.json
+
+          STATUS=$(jq -r '.Status' ssm-output.json)
+          if [ "$STATUS" != "Success" ]; then
+            echo "::error::SSM command finished with status $STATUS"
+            exit 1
+          fi
+
+      - name: Set deployment status
+        id: deployment_status
+        if: always()
+        run: |
+          echo "status=${{ job.status }}" >> $GITHUB_OUTPUT
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always() && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Send deployment email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "[MediSetu Frontend] Deploy ${{ needs.deploy.outputs.status }} for main"
+          to: harshitsharma@igtechso.com,anujbhadoriya@igtechso.com,uditchouhan@igtechso.com
+          from: ${{ secrets.SMTP_FROM }}
+          secure: false
+          html_body: |
+            <h2>MediSetu Frontend Deployment Report</h2>
+            <p><b>Status:</b> ${{ needs.deploy.outputs.status }} (Job result: ${{ needs.deploy.result }})</p>
+            <p><b>Branch:</b> main</p>
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Commit:</b> ${{ github.sha }}</p>
+            <p><b>GitHub Actions run:</b>
+              <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">View logs</a>
+            </p>

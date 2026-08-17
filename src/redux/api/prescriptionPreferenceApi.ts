@@ -1,0 +1,52 @@
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithAutoLogout } from "./baseQueryWithAutoLogout";
+
+export type PrescriptionPreferencePayload = {
+  headerOrder: string[];
+  habitList: string[];
+  surgerySuggestedList: string[];
+  allergyList: string[];
+  diagnosisList: string[];
+  dietarySuggestionsList: string[];
+};
+
+export type UpdateDoctorPreferencesRequest = {
+  doctorId: string;
+  /**
+   * Partial: every field on the route's Zod schema is optional and it upserts
+   * with a partial `set`, so sending one list (adding a custom diagnosis from
+   * the consultation screen) leaves the doctor's other lists untouched. The
+   * preferences page still sends the whole set.
+   */
+  data: Partial<PrescriptionPreferencePayload>;
+};
+
+export type PrescriptionPreferenceResponse = {
+  success: boolean;
+  message?: string;
+  result?: PrescriptionPreferencePayload;
+};
+
+export const prescriptionPreferenceApi = createApi({
+  reducerPath: "prescriptionPreferenceApi",
+  baseQuery: baseQueryWithAutoLogout,
+  tagTypes: ["PrescriptionPreference"],
+  endpoints: (b) => ({
+    updateDoctorPreferences: b.mutation<
+      PrescriptionPreferenceResponse,
+      UpdateDoctorPreferencesRequest
+    >({
+      query: ({ doctorId, data }) => ({
+        url: `/doctor/update-doctor-preferences/${doctorId}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, arg) => [
+        { type: "PrescriptionPreference", id: arg.doctorId },
+      ],
+    }),
+  }),
+});
+
+export const { useUpdateDoctorPreferencesMutation } =
+  prescriptionPreferenceApi;

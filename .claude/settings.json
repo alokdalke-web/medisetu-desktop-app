@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm /d/Projects/MediSetu/MediSetu/.husky/pre-push && cat /d/Projects/MediSetu/MediSetu/.husky/pre-commit)"
+    ],
+    "additionalDirectories": [
+      "D:\\Projects\\MediSetu\\MediSetu\\.husky"
+    ]
+  }
+}
