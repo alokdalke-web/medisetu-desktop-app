@@ -99,7 +99,7 @@ export class SqliteAppointmentRepository {
         a.payment_status as paymentStatus,
         a.booking_source as bookingSource
       FROM appointments a
-      JOIN patients p ON a.patient_id = p.id
+      LEFT JOIN patients p ON a.patient_id = p.id
       LEFT JOIN doctors d ON a.doctor_id = d.id
       LEFT JOIN services s ON a.service_id = s.id
       ORDER BY a.date DESC, a.time_slot ASC
