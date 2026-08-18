@@ -1,5 +1,5 @@
 // src/redux/api/dashboardApi.ts
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithAutoLogout } from "./baseQueryWithAutoLogout";
 import { TransportLayer } from "../../services/TransportLayer";
 import { getAuthToken } from "../../utils/auth";
@@ -14,21 +14,27 @@ import type {
   ReceptionOverviewResponse,
 } from "../../types/receptionistDash";
 
-// Separate base query for v2 endpoints — same pattern as
-// `clinicProfileOverviewBaseQuery` in clinicApi.ts. Swapping the version
-// segment into a url fed to the shared v1-pinned `baseQueryWithAutoLogout`
-// doesn't work: fetchBaseQuery still prepends its fixed baseUrl.
-const dashboardV2BaseQuery = fetchBaseQuery({
-  baseUrl: (import.meta.env.VITE_API_BASE_URL as string).replace(
-    /\/v1\/?$/,
-    "/v2",
-  ),
-  prepareHeaders: (headers) => {
-    const token = getAuthToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-    return headers;
-  },
-});
+import { getBackendUrlAsync } from "../../utils/config";
+
+const dashboardV2BaseQuery: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  const v1Url = await getBackendUrlAsync();
+  const baseUrl = v1Url.replace(/\/v1\/?$/, "/v2");
+  
+  const rawBaseQuery = fetchBaseQuery({
+    baseUrl,
+    prepareHeaders: (headers) => {
+      const token = getAuthToken();
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+      return headers;
+    },
+  });
+  
+  return rawBaseQuery(args, api, extraOptions);
+};
 
 /* =========================
    ADMIN DASHBOARD (existing types)

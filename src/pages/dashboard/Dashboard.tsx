@@ -2,6 +2,7 @@ import { Spinner } from "@heroui/react";
 import { type FC } from "react";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router";
+import { FiWifiOff } from "react-icons/fi";
 
 import { useEffectiveUserType } from "../../hooks/useEffectiveUserType";
 import { useConnectivityState } from "../../hooks/useConnectivityState";
@@ -51,6 +52,22 @@ const Dashboard: FC = () => {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <Spinner label="Loading dashboard..." />
+      </div>
+    );
+  }
+
+  if (isOffline) {
+    return (
+      <div className="w-full min-w-0 pb-4 sm:pb-6 antialiased dark:bg-[#0b1321] min-h-[600px] flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1a2535] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm max-w-md text-center">
+          <div className="h-16 w-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <FiWifiOff className="h-8 w-8" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Dashboard Unavailable Offline</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            You are currently disconnected from the network. The Dashboard relies on live analytics from the cloud and cannot be displayed offline. Please restore your connection to view your metrics.
+          </p>
+        </div>
       </div>
     );
   }

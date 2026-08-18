@@ -55,12 +55,8 @@ export class PushSyncEngine {
 
     try {
       const db = DatabaseManager.getConnection();
-      const res = db.prepare(`
-        UPDATE event_log 
-        SET status = 'pending', retry_count = 0, next_retry_at = NULL 
-        WHERE status IN ('failed', 'stuck')
-      `).run();
-      logger.info(`[SyncEngine] Auto-reset ${res.changes} stuck/failed events to pending`);
+      const res = this.eventLogRepository.autoResetStuckEvents(db);
+      logger.info(`[SyncEngine] Auto-reset ${res} stuck/failed events to pending`);
     } catch (e) {
       logger.error('Failed to auto-reset stuck events', e);
     }
@@ -201,6 +197,18 @@ export class PushSyncEngine {
               }
             } catch (e) {
               logger.error('SyncEngine: Failed to map patient cloud_id', e);
+            }
+          }
+
+          if (payload.entityType === 'prescription' && payload.payload && payload.payload.appointmentId) {
+            try {
+              const apptRow = db.prepare(`SELECT cloud_id FROM appointments WHERE id = ?`).get(payload.payload.appointmentId) as any;
+              if (apptRow && apptRow.cloud_id) {
+                payload.payload.appointmentId = apptRow.cloud_id;
+                logger.info(`SyncEngine: Rewrote prescription appointmentId to cloud_id ${apptRow.cloud_id}`);
+              }
+            } catch (e) {
+              logger.error('SyncEngine: Failed to map prescription appointmentId', e);
             }
           }
 
@@ -346,10 +354,9 @@ export class PushSyncEngine {
                 
                 // Prevent cascading failures
                 try {
-                  const stmt = db.prepare(`UPDATE event_log SET status = 'stuck', error_message = ? WHERE entity_id = ? AND status = 'pending'`);
-                  const res = stmt.run('Blocked by previous stuck event (404)', event.entity_id);
-                  if (res.changes > 0) {
-                    logger.warn(`SyncEngine: Also marked ${res.changes} dependent events for entity ${event.entity_id} as stuck.`);
+                  const changes = this.eventLogRepository.cascadeStuckStatus(db, event.entity_id, 'Blocked by previous stuck event (404)');
+                  if (changes > 0) {
+                    logger.warn(`SyncEngine: Also marked ${changes} dependent events for entity ${event.entity_id} as stuck.`);
                   }
                 } catch (e) {}
 
@@ -366,10 +373,9 @@ export class PushSyncEngine {
               
               // Prevent cascading failures: mark any subsequent pending events for this same entity as stuck
               try {
-                const stmt = db.prepare(`UPDATE event_log SET status = 'stuck', error_message = ? WHERE entity_id = ? AND status = 'pending'`);
-                const res = stmt.run('Blocked by previous stuck event', event.entity_id);
-                if (res.changes > 0) {
-                  logger.warn(`SyncEngine: Also marked ${res.changes} dependent events for entity ${event.entity_id} as stuck.`);
+                const changes = this.eventLogRepository.cascadeStuckStatus(db, event.entity_id, 'Blocked by previous stuck event');
+                if (changes > 0) {
+                  logger.warn(`SyncEngine: Also marked ${changes} dependent events for entity ${event.entity_id} as stuck.`);
                 }
               } catch (e) {
                 logger.error('SyncEngine: Failed to cascade stuck status', e);

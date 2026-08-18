@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery, type BaseQueryFn, type FetchArgs, type FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 import type {
   CreateClinicRequestDto,
   UpdateClinicRequestDto,
@@ -21,22 +21,27 @@ import type {
   UpdateBankDetailsResponse,
 } from "../../types/razorpayOnboarding";
 
-// Profile-overview aggregation + consolidated profile update live on a newer
-// backend API version while the shared `baseQueryWithAutoLogout` is pinned to
-// /api/v1 (see baseQueryWithAutoLogout.ts). Only these two endpoints use this
-// second, minimal base query — every other endpoint in this file stays on v1.
-const clinicProfileOverviewBaseQuery = fetchBaseQuery({
-  // This aggregation endpoint lives on a newer backend API version than the rest of clinicApi
-  baseUrl: (import.meta.env.VITE_API_BASE_URL as string).replace(
-    "/v1",
-    "/v2",
-  ),
-  prepareHeaders: (headers) => {
-    const token = getAuthToken();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-    return headers;
-  },
-});
+import { getBackendUrlAsync } from "../../utils/config";
+
+const clinicProfileOverviewBaseQuery: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  const v1Url = await getBackendUrlAsync();
+  const baseUrl = v1Url.replace(/\/v1\/?$/, "/v2");
+  
+  const rawBaseQuery = fetchBaseQuery({
+    baseUrl,
+    prepareHeaders: (headers) => {
+      const token = getAuthToken();
+      if (token) headers.set("Authorization", `Bearer ${token}`);
+      return headers;
+    },
+  });
+  
+  return rawBaseQuery(args, api, extraOptions);
+};
 
 // ─── Statistics Interface ───
 export interface ClinicStats {

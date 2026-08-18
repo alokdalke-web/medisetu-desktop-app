@@ -1,7 +1,7 @@
 // src/pages/dashboard/receptionistDash/ReceptionistDash.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { FiCalendar, FiPlus, FiUsers } from "react-icons/fi";
+import { FiCalendar, FiPlus, FiUsers, FiWifiOff } from "react-icons/fi";
 import { HiOutlineClock } from "react-icons/hi";
 import { MdOutlinePayment } from "react-icons/md";
 import { TbChartLine } from "react-icons/tb";
@@ -250,6 +250,22 @@ const ReceptionistDash = () => {
   );
 
   const showSkeleton = isLoading && !appointmentsData;
+
+  if (isOffline) {
+    return (
+      <div className="w-full min-w-0 pb-4 sm:pb-6 antialiased dark:bg-[#0b1321] min-h-[600px] flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-[#1a2535] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm max-w-md text-center">
+          <div className="h-16 w-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <FiWifiOff className="h-8 w-8" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Dashboard Unavailable Offline</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            You are currently disconnected from the network. The Receptionist Dashboard relies on live analytics from the cloud and cannot be displayed offline. Please restore your connection to view your metrics.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-w-0 px-3 sm:px-0 pt-0 pb-4 sm:pb-6 antialiased lg:h-full lg:flex lg:flex-col lg:overflow-hidden dark:bg-[#0b1321]">

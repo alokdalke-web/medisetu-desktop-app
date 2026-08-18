@@ -154,12 +154,18 @@ export class EventLogRepository {
   }
 
   public markEventSynced(db: Database.Database, eventId: string): void {
+    const lamportClock = NodeIdentity.getNextLamportClock();
     const stmt = db.prepare(`
       UPDATE event_log 
-      SET status = 'synced', synced_to_cloud = 1, error_message = NULL 
+      SET status = 'synced', synced_to_cloud = 1, error_message = NULL, lamport_clock = ?
       WHERE id = ?
     `);
-    stmt.run(eventId);
+    stmt.run(lamportClock, eventId);
+
+    const updatedEvent = this.getEventById(db, eventId);
+    if (updatedEvent) {
+      localEventEmitter.emit('local_event_inserted', updatedEvent);
+    }
   }
 
   public markEventFailed(db: Database.Database, eventId: string, errorMessage: string): void {
@@ -171,6 +177,7 @@ export class EventLogRepository {
     // 2. Calculate exponential backoff: min(15 * (2 ^ retry_count), 1800) capped at 30 minutes
     const delaySeconds = Math.min(15 * Math.pow(2, newRetryCount), 1800);
     const nextRetryAt = new Date(Date.now() + delaySeconds * 1000).toISOString();
+    const lamportClock = NodeIdentity.getNextLamportClock();
 
     // 3. Update the event
     const stmt = db.prepare(`
@@ -179,21 +186,34 @@ export class EventLogRepository {
           retry_count = ?, 
           last_attempt_at = CURRENT_TIMESTAMP, 
           next_retry_at = ?,
-          error_message = ? 
+          error_message = ?,
+          lamport_clock = ?
       WHERE id = ?
     `);
-    stmt.run(newRetryCount, nextRetryAt, errorMessage, eventId);
+    stmt.run(newRetryCount, nextRetryAt, errorMessage, lamportClock, eventId);
+
+    const updatedEvent = this.getEventById(db, eventId);
+    if (updatedEvent) {
+      localEventEmitter.emit('local_event_inserted', updatedEvent);
+    }
   }
   public markEventPermanentlyFailed(db: Database.Database, eventId: string, errorMessage: string): void {
+    const lamportClock = NodeIdentity.getNextLamportClock();
     const stmt = db.prepare(`
       UPDATE event_log 
       SET status = 'failed', 
           retry_count = 99, 
           last_attempt_at = CURRENT_TIMESTAMP, 
-          error_message = ? 
+          error_message = ?,
+          lamport_clock = ?
       WHERE id = ?
     `);
-    stmt.run(errorMessage, eventId);
+    stmt.run(errorMessage, lamportClock, eventId);
+
+    const updatedEvent = this.getEventById(db, eventId);
+    if (updatedEvent) {
+      localEventEmitter.emit('local_event_inserted', updatedEvent);
+    }
   }
 
   /**
@@ -202,14 +222,21 @@ export class EventLogRepository {
    * once it has exhausted its retry attempts, allowing it to be surfaced in the UI.
    */
   public markEventStuck(db: Database.Database, eventId: string, errorMessage: string): void {
+    const lamportClock = NodeIdentity.getNextLamportClock();
     const stmt = db.prepare(`
       UPDATE event_log 
       SET status = 'stuck', 
           last_attempt_at = CURRENT_TIMESTAMP, 
-          error_message = ? 
+          error_message = ?,
+          lamport_clock = ?
       WHERE id = ?
     `);
-    stmt.run(errorMessage, eventId);
+    stmt.run(errorMessage, lamportClock, eventId);
+
+    const updatedEvent = this.getEventById(db, eventId);
+    if (updatedEvent) {
+      localEventEmitter.emit('local_event_inserted', updatedEvent);
+    }
   }
 
   /**
@@ -244,15 +271,54 @@ export class EventLogRepository {
    * getPendingEventsForHost query on the next sync cycle.
    */
   public resetEventForRetry(db: Database.Database, eventId: string): void {
+    const lamportClock = NodeIdentity.getNextLamportClock();
     const stmt = db.prepare(`
       UPDATE event_log 
       SET status = 'pending', 
           retry_count = 0, 
           next_retry_at = NULL, 
-          error_message = NULL 
+          error_message = NULL,
+          lamport_clock = ?
       WHERE id = ?
     `);
-    stmt.run(eventId);
+    stmt.run(lamportClock, eventId);
+
+    const updatedEvent = this.getEventById(db, eventId);
+    if (updatedEvent) {
+      localEventEmitter.emit('local_event_inserted', updatedEvent);
+    }
+  }
+
+  /**
+   * Cascades stuck status to pending events for the same entity to prevent sequence errors.
+   */
+  public cascadeStuckStatus(db: Database.Database, entityId: string, errorMessage: string): number {
+    const pendingEvents = db.prepare(`SELECT id FROM event_log WHERE entity_id = ? AND status = 'pending'`).all(entityId) as { id: string }[];
+    
+    if (pendingEvents.length === 0) return 0;
+
+    let changes = 0;
+    for (const event of pendingEvents) {
+      this.markEventStuck(db, event.id, errorMessage);
+      changes++;
+    }
+    return changes;
+  }
+
+  /**
+   * Automatically resets stuck or failed events to pending state on startup.
+   */
+  public autoResetStuckEvents(db: Database.Database): number {
+    const events = db.prepare(`SELECT id FROM event_log WHERE status IN ('failed', 'stuck')`).all() as { id: string }[];
+    
+    if (events.length === 0) return 0;
+
+    let changes = 0;
+    for (const event of events) {
+      this.resetEventForRetry(db, event.id);
+      changes++;
+    }
+    return changes;
   }
 
   /**

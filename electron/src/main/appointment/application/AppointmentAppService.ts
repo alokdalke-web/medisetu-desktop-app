@@ -480,7 +480,7 @@ export class AppointmentAppService {
   public async addMultipleServices(appointmentId: string, serviceIds: string[], paymentMode: string, paymentNotes?: string) {
     await TransactionManager.run((tx) => {
       // 1. Mark appointment as Paid
-      this.repository.updatePaymentStatus(tx, appointmentId, paymentMode);
+      this.repository.updatePaymentStatus(tx, appointmentId, paymentMode, serviceIds[0]);
       
       // 2. Add multiple services
       for (const serviceId of serviceIds) {

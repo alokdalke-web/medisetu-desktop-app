@@ -75,7 +75,7 @@ export class EventProjector {
           let existingData: any = {};
           if (operation === 'UPDATE') {
             try {
-              existingData = db.prepare('SELECT * FROM appointments WHERE id = ?').get(id) || {};
+              existingData = db.prepare('SELECT * FROM appointments WHERE id = ? OR cloud_id = ?').get(id, id) || {};
             } catch (err) {}
           }
 
@@ -89,6 +89,7 @@ export class EventProjector {
           const paymentStatus = data.payment?.paymentStatus || data.paymentStatus || data.payment_status || existingData.payment_status || null;
           const bookingSource = data.bookingSource || data.booking_source || existingData.booking_source || null;
           const cloudId = data.cloudId || data.cloud_id || data.appointmentId || existingData.cloud_id || null;
+          const localId = existingData.id || id;
 
           if (operation === 'CREATE' && doctorId && date && timeSlot) {
              try {
@@ -127,7 +128,7 @@ export class EventProjector {
               cloud_id = EXCLUDED.cloud_id
           `);
           stmt.run(
-            id,
+            localId,
             patientId,
             doctorId,
             date,
@@ -141,11 +142,68 @@ export class EventProjector {
           );
           break;
         }
+
+        case 'APPOINTMENT_SERVICE': {
+          const appointmentId = data.appointmentId || data.appointment_id || '';
+          const paymentMode = data.paymentMode || data.payment_mode || 'Cash';
+          const paymentNotes = data.paymentNotes || data.payment_notes || '';
+          
+          let serviceIds: string[] = [];
+          if (Array.isArray(data.serviceIds)) {
+            serviceIds = data.serviceIds;
+          } else if (data.serviceId) {
+            serviceIds = [data.serviceId];
+          } else if (data.service_id) {
+            serviceIds = [data.service_id];
+          }
+
+          if (!appointmentId || serviceIds.length === 0) {
+            logger.warn(`[EventProjector] Skipping APPOINTMENT_SERVICE ${id}: Missing appointmentId or serviceIds.`);
+            break;
+          }
+
+          // 1. Mark appointment as Paid and update payment_mode
+          try {
+            db.prepare(`UPDATE appointments SET payment_status = 'Paid', payment_mode = ?, service_id = COALESCE(service_id, ?) WHERE id = ?`).run(paymentMode, serviceIds[0], appointmentId);
+          } catch(e) {
+            logger.warn(`[EventProjector] Failed to update appointment payment info: ${e}`);
+          }
+
+          // 2. Insert into appointment_multiple_service
+          const stmt = db.prepare(`
+            INSERT INTO appointment_multiple_service (id, appointment_id, service_id, price, payment_mode, payment_notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              service_id = EXCLUDED.service_id,
+              price = EXCLUDED.price,
+              payment_mode = EXCLUDED.payment_mode,
+              payment_notes = EXCLUDED.payment_notes
+          `);
+
+          for (let i = 0; i < serviceIds.length; i++) {
+            const sId = serviceIds[i];
+            
+            // Get price from local services table
+            let price = 500;
+            try {
+              const svcRow = db.prepare('SELECT price FROM services WHERE id = ?').get(sId) as { price: number } | undefined;
+              if (svcRow && svcRow.price !== undefined) {
+                price = svcRow.price;
+              }
+            } catch(e) {}
+
+            // The event id is used as the row id. If serviceIds has multiple elements, generate new uuids for subsequent ones
+            const rowId = (i === 0) ? id : crypto.randomUUID();
+            stmt.run(rowId, appointmentId, sId, price, paymentMode, paymentNotes);
+          }
+          break;
+        }
+
         case 'PRESCRIPTION': {
           let existingData: any = {};
           if (operation === 'UPDATE') {
             try {
-              existingData = db.prepare('SELECT * FROM prescriptions WHERE id = ?').get(id) || {};
+              existingData = db.prepare('SELECT * FROM prescriptions WHERE id = ? OR cloud_id = ?').get(id, id) || {};
             } catch (err) {}
           }
           const patientId = data.patientId || data.patient_id || existingData.patient_id || null;
@@ -153,6 +211,7 @@ export class EventProjector {
           const date = data.date || existingData.date || createdAt;
           const itemsJson = data.items ? JSON.stringify(data.items) : (existingData.items_json || '[]');
           const cloudId = data.cloudId || data.cloud_id || data.prescriptionId || existingData.cloud_id || null;
+          const localId = existingData.id || id;
           
           const stmt = db.prepare(`
             INSERT INTO prescriptions (id, patient_id, doctor_id, date, items_json, cloud_id)
@@ -164,7 +223,7 @@ export class EventProjector {
               items_json = EXCLUDED.items_json,
               cloud_id = EXCLUDED.cloud_id
           `);
-          stmt.run(id, patientId, doctorId, date, itemsJson, cloudId);
+          stmt.run(localId, patientId, doctorId, date, itemsJson, cloudId);
           break;
         }
 
@@ -176,6 +235,7 @@ export class EventProjector {
             } catch (err) {}
           }
           const cloudId = data.cloudId || data.cloud_id || data.medicineId || existingData.cloud_id || null;
+          const localId = existingData.id || id;
           const stmt = db.prepare(`
             INSERT INTO medicines (
               id, name, generic_name, manufacturer, composition, form, strength, 
@@ -196,7 +256,7 @@ export class EventProjector {
               cloud_id = EXCLUDED.cloud_id
           `);
           stmt.run(
-            id,
+            localId,
             data.name || existingData.name || 'Unknown',
             data.genericName || data.generic_name || existingData.generic_name || null,
             data.manufacturer || existingData.manufacturer || null,

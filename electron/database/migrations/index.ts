@@ -474,6 +474,14 @@ export function runMigrations(db: Database.Database) {
       up: `
         ALTER TABLE appointments ADD COLUMN conflict_group_id TEXT;
       `
+    },
+    {
+      version: 24,
+      up: `
+        UPDATE appointments 
+        SET service_id = (SELECT service_id FROM appointment_multiple_service WHERE appointment_id = appointments.id LIMIT 1)
+        WHERE service_id IS NULL AND EXISTS (SELECT 1 FROM appointment_multiple_service WHERE appointment_id = appointments.id);
+      `
     }
   ];
 

@@ -198,13 +198,22 @@ export class SqliteAppointmentRepository {
     );
   }
 
-  public updatePaymentStatus(tx: Database.Database, appointmentId: string, paymentMode: string): void {
-    const stmt = tx.prepare(`
-      UPDATE appointments 
-      SET payment_status = 'Paid', payment_mode = ?, sync_status = 'pending', updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `);
-    stmt.run(paymentMode, appointmentId);
+  public updatePaymentStatus(tx: Database.Database, appointmentId: string, paymentMode: string, firstServiceId?: string): void {
+    if (firstServiceId) {
+      const stmt = tx.prepare(`
+        UPDATE appointments 
+        SET payment_status = 'Paid', payment_mode = ?, service_id = COALESCE(service_id, ?), sync_status = 'pending', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+      stmt.run(paymentMode, firstServiceId, appointmentId);
+    } else {
+      const stmt = tx.prepare(`
+        UPDATE appointments 
+        SET payment_status = 'Paid', payment_mode = ?, sync_status = 'pending', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `);
+      stmt.run(paymentMode, appointmentId);
+    }
   }
 
   public getServicePrice(serviceId: string): number {
